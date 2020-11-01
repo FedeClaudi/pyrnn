@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 from rich import print
 from pyinspect._colors import mocassin, orange
+import numpy as np
+from rich.progress import track
 from ._progress import train_progress
 
 
@@ -58,6 +60,25 @@ class RNN(nn.Module):
         out, h = self.rnn_layer(x, h)
         out = self.output_activation(self.output_layer(out))
         return out, h
+
+    def predict_with_history(self, X):
+        print(f"[{mocassin}]Predicting input step by step")
+        seq_len = X.shape[1]
+        h = None
+        hidden_trace = np.zeros((seq_len, self.n_units))
+        output_trace = np.zeros((seq_len, self.output_size))
+        for step in track(range(seq_len)):
+            o, h = self(X[0, step, :].reshape(1, 1, -1), h)
+            hidden_trace[step, :] = h.detach().numpy()
+            output_trace[step, :] = o.detach().numpy()
+
+        return output_trace, hidden_trace
+
+    def predict(self, X):
+        o, h = self(X[0, :, :].unsqueeze(0))
+        o = o.detach().numpy()
+        h = h.detach().numpy()
+        return o, h
 
     def fit(
         self,

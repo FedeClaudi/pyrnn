@@ -48,6 +48,19 @@ class LearningRateColumn(TextColumn):
             return "no lr"
 
 
+class FPSpeedColumn(TextColumn):
+    _renderable_cache = {}
+
+    def __init__(self, *args):
+        pass
+
+    def render(self, task):
+        if task.fields["fpspeed"] is not None:
+            return f"[{mocassin}]fp speed: [bold {orange}]{task.fields['fpspeed']:.6e}"
+        else:
+            return f"[{mocassin}]fp speed: [bold {orange}]nan"
+
+
 train_progress = Progress(
     TextColumn("[bold magenta]Step {task.completed}/{task.total}"),
     SpeedColumn(),
@@ -60,4 +73,14 @@ train_progress = Progress(
     "•",
     LossColumn(),
     LearningRateColumn(),
+)
+
+
+fixed_points_progress = Progress(
+    "[progress.description]{task.description}",
+    BarColumn(bar_width=None),
+    "•",
+    "[progress.percentage]{task.percentage:>3.0f}%",
+    "•",
+    FPSpeedColumn(),
 )

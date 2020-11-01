@@ -1,7 +1,6 @@
 import numpy as np
 from numpy import random as rnd
 import matplotlib.pyplot as plt
-from rich.progress import track
 import torch
 from pyinspect._colors import salmon, dimgreen, lilla
 from pyrnn._plot import clean_axes
@@ -59,31 +58,8 @@ def make_batch(seq_len, batch_size):
     return X_batch, Y_batch
 
 
-def predict_with_history(model, seq_len, batch_size):
-    X, Y = make_batch(seq_len, batch_size)
-
-    h = None
-    hidden_trace = np.zeros((seq_len, model.n_units))
-    output_trace = np.zeros((seq_len, model.output_size))
-    for step in track(range(seq_len)):
-        o, h = model(X[0, step, :].reshape(1, 1, -1), h)
-        hidden_trace[step, :] = h.detach().numpy()
-        output_trace[step, :] = o.detach().numpy()
-
-    return X, Y, hidden_trace, output_trace
-
-
-def predict(model, seq_len, batch_size):
-    X, Y = make_batch(seq_len, batch_size)
-
-    o, h = model(X[0, :, :].unsqueeze(0))
-    o = o.detach().numpy()
-    h = h.detach().numpy()
-    return X, Y, o, h
-
-
 def plot_predictions(model, seq_len, batch_size):
-    X, Y, o, h = predict(model, seq_len, batch_size)
+    X, Y, o, h = model.predict(model, seq_len, batch_size)
 
     f, axarr = plt.subplots(nrows=3, figsize=(12, 9))
     for n, ax in enumerate(axarr):
