@@ -1,0 +1,33 @@
+repos:
+-   repo: https://github.com/python/black
+    rev: 20.8b1
+    hooks:
+    - id: black
+      pass_filenames: true
+
+-   repo: https://gitlab.com/pycqa/flake8
+    rev: 3.7.9
+    hooks:
+    - id: flake8
+      pass_filenames: true
+      # this seems to need to be here in addition to setup.cfg
+      exclude: __init__.py, setup.py, tests/test_what.py
+      args: ['--config=setup.cfg']
+
+
+
+# - repo: local
+#   hooks:
+#     # - id: pytest
+#     #   name: pytest
+#     #   entry: bash -c 'pytest'
+#     #   language: system
+#     #   types: [python]
+#     #   pass_filenames: false
+#     - id: make_coverage_badge
+#       name: make_coverage_badge
+#       entry: bash -c 'rm coverage.svg;coverage-badge -o coverage.svg'
+#       language: system
+#       types: [python]
+#       pass_filenames: false
+
