@@ -51,12 +51,12 @@ class RNN(nn.Module):
         model.eval()
         return model
 
-    def _initialize_hidden(self):
-        return torch.zeros((1, 1, self.n_units))
+    def _initialize_hidden(self, x):
+        return torch.zeros((1, x.shape[0], self.n_units))
 
     def forward(self, x, h=None):
         if h is None:
-            h = self._initialize_hidden()
+            h = self._initialize_hidden(x)
         out, h = self.rnn_layer(x, h)
         out = self.output_activation(self.output_layer(out))
         return out, h
@@ -67,7 +67,7 @@ class RNN(nn.Module):
         h = None
         hidden_trace = np.zeros((seq_len, self.n_units))
         output_trace = np.zeros((seq_len, self.output_size))
-        
+
         for step in track(range(seq_len)):
             o, h = self(X[0, step, :].reshape(1, 1, -1), h)
             hidden_trace[step, :] = h.detach().numpy()
@@ -83,7 +83,7 @@ class RNN(nn.Module):
 
     def fit(
         self,
-        batch_maker,
+        dataset,
         *args,
         batch_size=64,
         n_epochs=100,
@@ -91,6 +91,15 @@ class RNN(nn.Module):
         input_length=100,
         **kwargs,
     ):
+
+        train_dataloader = torch.utils.data.DataLoader(
+            dataset,
+            batch_size=batch_size,
+            num_workers=2,
+            shuffle=True,
+            worker_init_fn=lambda x: np.random.seed(),
+        )
+
         optimizer = torch.optim.SGD(self.parameters(), lr=lr)
         criterion = torch.nn.MSELoss()
 
@@ -106,22 +115,20 @@ class RNN(nn.Module):
 
             # loop over epochs
             for epoch in range(n_epochs + 1):
-                X_batch, Y_batch = batch_maker(*args, **kwargs)
-
                 # Loop over batch samples
                 batch_loss = 0
-                for batchn in range(batch_size):
+                for batchn, batch in enumerate(train_dataloader):
                     # initialise
-                    X, Y = X_batch[batchn], Y_batch[batchn]
+                    X, Y = batch
 
                     # zero gradient
                     optimizer.zero_grad()
 
                     # predict
-                    output, h = self(X.reshape(1, input_length, -1))
+                    output, h = self(X)
 
                     # backprop + optimizer
-                    loss = criterion(output[0, :], Y)
+                    loss = criterion(output, Y)
                     loss.backward(retain_graph=True)
                     optimizer.step()
 

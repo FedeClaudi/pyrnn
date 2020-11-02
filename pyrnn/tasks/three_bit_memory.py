@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import torch
 from pyinspect._colors import salmon, dimgreen, lilla
 from pyrnn._plot import clean_axes
+import torch.utils.data as data
 
 """
     3 bit memory task
@@ -15,10 +16,19 @@ from pyrnn._plot import clean_axes
 """
 
 
-def make_batch(seq_len, batch_size):
-    X_batch = torch.zeros((batch_size, seq_len, 3))
-    Y_batch = torch.zeros((batch_size, seq_len, 3))
-    for batch in range(batch_size):
+class ThreeBitDataset(data.Dataset):
+    def __init__(self, sequence_length, dataset_length=1):
+        self.sequence_length = sequence_length
+        self.dataset_length = dataset_length
+
+    def __len__(self):
+        return self.dataset_length
+
+    def __getitem__(self, item):
+        seq_len = self.sequence_length
+        X_batch = torch.zeros((seq_len, 3))
+        Y_batch = torch.zeros((seq_len, 3))
+
         for m in range(3):
             # Define input
             X = torch.zeros(seq_len)
@@ -49,13 +59,25 @@ def make_batch(seq_len, batch_size):
             X = X.reshape(1, seq_len, 1)
 
             # out shape = (batch, seq_len, num_directions * hidden_size)
-            # h_n shape  = (num_layers * num_directions, batch, hidden_size)
             Y = Y.reshape(1, seq_len, 1)
 
-            X_batch[batch, :, m] = X.squeeze()
-            Y_batch[batch, :, m] = Y.squeeze()
+            X_batch[:, m] = X.squeeze()
+            Y_batch[:, m] = Y.squeeze()
 
-    return X_batch, Y_batch
+        return X_batch, Y_batch
+
+
+def make_batch(seq_len):
+    dataloader = torch.utils.data.DataLoader(
+        ThreeBitDataset(seq_len, dataset_length=1),
+        batch_size=1,
+        num_workers=2,
+        shuffle=True,
+        worker_init_fn=lambda x: np.random.seed(),
+    )
+
+    batch = [b for b in dataloader][0]
+    return batch
 
 
 def plot_predictions(model, seq_len, batch_size):

@@ -22,7 +22,7 @@ lr = 0.005
 
 rnn = RNN.load("3bit_fully_trained.pt", input_size=3, output_size=3)
 
-X, Y = make_batch(N, 1)
+X, Y = make_batch(N)
 o, h = rnn.predict_with_history(X)
 
 # ----------------------------- Find fixed points ---------------------------- #
