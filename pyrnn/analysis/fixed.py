@@ -16,6 +16,7 @@ class FixedPoint(object):
 
         if jacobian is None:
             self.compute_jacobian()
+            self.analyse_stability()
         else:
             self.jacobian = jacobian
 
@@ -31,7 +32,9 @@ class FixedPoint(object):
         h = np.array(data_dict["h"])
         constant_input = np.array(data_dict["constant_input"])
         jacobian = np.array(data_dict["jacobian"])
-        return cls(h, constant_input, jacobian=jacobian)
+        fp = cls(h, constant_input, jacobian=jacobian)
+        fp.analyse_stability()
+        return fp
 
     def compute_jacobian(self):
         n_units = len(self.h)
