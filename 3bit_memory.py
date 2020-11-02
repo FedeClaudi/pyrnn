@@ -14,9 +14,9 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 # ---------------------------------- Params ---------------------------------- #
 
-N = 3000
+N = 15000
 batch_size = 64
-epochs = 100
+epochs = 300
 lr = 0.005
 
 FIT = False
@@ -36,16 +36,15 @@ if FIT:
         input_length=N,
     )
     plot_training_loss(loss_history)
-    rnn.save("3bit.pt")
+    rnn.save("3bit_fully_trained.pt")
 
     plot_predictions(rnn, N, batch_size)
     plt.show()
 else:
     rnn = RNN.load("3bit_fully_trained.pt", input_size=3, output_size=3)
 
-
 # ------------------------------- Activity PCA ------------------------------- #
-X, Y = make_batch(1, N)
-o, h = rnn.predict_with_history(rnn, N, batch_size)
+X, Y = make_batch(N, 1)
+o, h = rnn.predict_with_history(X)
 
 plot_state_history_pca_3d(h, alpha=0.01)

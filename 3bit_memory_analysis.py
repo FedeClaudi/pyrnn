@@ -12,6 +12,7 @@ from pyrnn.plot import plot_fixed_points
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
+# ----------------------------------- setup ---------------------------------- #
 
 N = 10000
 batch_size = 64
@@ -23,6 +24,8 @@ rnn = RNN.load("3bit_fully_trained.pt", input_size=3, output_size=3)
 
 X, Y = make_batch(N, 1)
 o, h = rnn.predict_with_history(X)
+
+# ----------------------------- Find fixed points ---------------------------- #
 
 fp_finder = FixedPoints(
     rnn,
@@ -45,5 +48,6 @@ fp_finder.find_fixed_points(
 
 fp_finder.save_fixed_points("fps.json")
 
+# ----------------------------------- Plot ----------------------------------- #
 fps = FixedPoints.load_fixed_points("fps.json")
 plot_fixed_points(h, fps, alpha=0.01)

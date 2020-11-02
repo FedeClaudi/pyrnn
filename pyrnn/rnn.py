@@ -67,6 +67,7 @@ class RNN(nn.Module):
         h = None
         hidden_trace = np.zeros((seq_len, self.n_units))
         output_trace = np.zeros((seq_len, self.output_size))
+        
         for step in track(range(seq_len)):
             o, h = self(X[0, step, :].reshape(1, 1, -1), h)
             hidden_trace[step, :] = h.detach().numpy()
