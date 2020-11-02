@@ -1,6 +1,8 @@
 .vscode
 *.npy
 *.pt
+*.json
+
 workspace.py
 # Byte-compiled / optimized / DLL files
 __pycache__/
