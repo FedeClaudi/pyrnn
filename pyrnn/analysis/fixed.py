@@ -3,9 +3,12 @@ import torch
 from rich import print
 from pyinspect._colors import mocassin, orange
 from scipy.spatial.distance import euclidean
+from collections import namedtuple
 
 from pyrnn._progress import fixed_points_progress
 from pyrnn._io import save_json, load_json
+
+eig_mode = namedtuple("eigmode", "stable, eigv, eigvec")
 
 
 class FixedPoint(object):
@@ -45,15 +48,12 @@ class FixedPoint(object):
         _o, _h = self.model(self.constant_input, h)
 
         for i in range(n_units):
-            output = torch.zeros(1, 1, n_units)
-            output[0, 0, i] = 1.0
-
             g = torch.autograd.grad(
-                _h, h, grad_outputs=output, retain_graph=True
+                _h, h, grad_outputs=self.constant_input, retain_graph=True
             )[0]
             jacobian[:, i : i + 1] = g[0, 0, :].reshape(-1, 1)
 
-        self.jacobian = jacobian.numpy().T
+        self.jacobian = jacobian.numpy()
 
     def decompose_jacobian(self):
         # return eigen values and eigen vectors of jacobain
@@ -66,18 +66,21 @@ class FixedPoint(object):
         self.is_stable = np.all(np.abs(eigv) < 1.0)
 
         # Get stability over each mode
-        sorted_eigv_idx = np.argsort(np.abs(eigv))
-        self.stable_directions = []  # holds stable eigenvecs
-        for n in range(self.jacobian.shape[0]):
-            idx = sorted_eigv_idx[-(n + 1)]
-
+        self.eigenmodes = []  # holds stable eigenvecs
+        for e_val, e_vec in zip(eigv, eigvecs.T):
             # Magnitude of complex eigenvalue
-            eigv_mag = np.abs(eigv[idx])
+            eigv_mag = np.abs(e_val)
 
-            if eigv_mag < 1.0:
-                self.stable_directions.append(np.real(eigvecs[idx]))
+            if eigv_mag <= 1.0:
+                stable = True
             else:
-                self.stable_directions.append(None)
+                stable = False
+
+            self.eigenmodes.append(eig_mode(stable, eigv_mag, np.real(e_vec)))
+
+        self.n_unstable_modes = np.sum(
+            [1 for mode in self.eigenmodes if not mode.stable]
+        )
 
 
 class FixedPoints(object):
