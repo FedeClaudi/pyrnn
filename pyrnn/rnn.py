@@ -8,11 +8,16 @@ from ._progress import train_progress
 
 
 class RNN(nn.Module):
+    r"""
+    h_{t}=\tanh \left(W_{i h} x_{t}+b_{i h}+W_{h h} h_{(t-1)}+b_{h h}\right)
+    """
+
     def __init__(
         self,
         input_size=1,
         output_size=1,
         n_units=50,
+        free_output_weights=False,
     ):
 
         super(RNN, self).__init__()
@@ -26,8 +31,19 @@ class RNN(nn.Module):
             hidden_size=n_units,
             batch_first=True,
         )
+
         self.output_layer = nn.Linear(n_units, output_size)
         self.output_activation = nn.Tanh()
+
+        # Freeze output layer's weights
+        if free_output_weights:
+            for p in self.output_layer.parameters():
+                p.requires_grad = False
+
+        self._get_recurrent_weights()
+
+    def _get_recurrent_weights(self):
+        self.recurrent_weights = self.rnn_layer.weight_hh_l0
 
     def _show(self):
         print(self)
@@ -57,29 +73,10 @@ class RNN(nn.Module):
     def forward(self, x, h=None):
         if h is None:
             h = self._initialize_hidden(x)
+
         out, h = self.rnn_layer(x, h)
         out = self.output_activation(self.output_layer(out))
         return out, h
-
-    def predict_with_history(self, X):
-        print(f"[{mocassin}]Predicting input step by step")
-        seq_len = X.shape[1]
-        h = None
-        hidden_trace = np.zeros((seq_len, self.n_units))
-        output_trace = np.zeros((seq_len, self.output_size))
-
-        for step in track(range(seq_len), description="predicting..."):
-            o, h = self(X[0, step, :].reshape(1, 1, -1), h)
-            hidden_trace[step, :] = h.detach().numpy()
-            output_trace[step, :] = o.detach().numpy()
-
-        return output_trace, hidden_trace
-
-    def predict(self, X):
-        o, h = self(X[0, :, :].unsqueeze(0))
-        o = o.detach().numpy()
-        h = h.detach().numpy()
-        return o, h
 
     def fit(
         self,
@@ -142,3 +139,23 @@ class RNN(nn.Module):
                 )
                 losses.append(batch_loss / batch_size)
         return losses
+
+    def predict_with_history(self, X):
+        print(f"[{mocassin}]Predicting input step by step")
+        seq_len = X.shape[1]
+        h = None
+        hidden_trace = np.zeros((seq_len, self.n_units))
+        output_trace = np.zeros((seq_len, self.output_size))
+
+        for step in track(range(seq_len), description="predicting..."):
+            o, h = self(X[0, step, :].reshape(1, 1, -1), h)
+            hidden_trace[step, :] = h.detach().numpy()
+            output_trace[step, :] = o.detach().numpy()
+
+        return output_trace, hidden_trace
+
+    def predict(self, X):
+        o, h = self(X[0, :, :].unsqueeze(0))
+        o = o.detach().numpy()
+        h = h.detach().numpy()
+        return o, h

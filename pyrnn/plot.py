@@ -7,7 +7,7 @@ from rich import print
 
 
 from ._plot import clean_axes, points_from_pc
-from ._utils import prepend_dim
+from ._utils import prepend_dim, npify
 
 
 # -------------------------------- matplotlib -------------------------------- #
@@ -18,6 +18,14 @@ def plot_training_loss(loss_history):
 
     ax.plot(loss_history, lw=2, color=salmon)
     ax.set(xlabel="epochs", ylabel="loss", title="Training loss")
+    clean_axes(f)
+
+
+def plot_recurrent_weights(model):
+    f, ax = plt.subplots(figsize=(10, 10))
+
+    ax.imshow(npify(model.recurrent_weights, flatten=False), cmap="bwr")
+    ax.set(xticks=[], yticks=[])
     clean_axes(f)
 
 

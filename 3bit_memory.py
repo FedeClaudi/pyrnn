@@ -8,7 +8,7 @@ from pyrnn.tasks.three_bit_memory import (
     plot_predictions,
     make_batch,
 )
-
+from pyrnn.plot import plot_recurrent_weights
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
@@ -17,7 +17,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 N = 300
 batch_size = 64
-epochs = 300
+epochs = 1000
 lr = 0.005
 
 FIT = True
@@ -26,12 +26,12 @@ FIT = True
 # ------------------------------- Fit/load RNN ------------------------------- #
 
 if FIT:
-    dataset = ThreeBitDataset(N)
+    dataset = ThreeBitDataset(N, dataset_length=32)
+
     rnn = RNN(input_size=3, output_size=3)
     loss_history = rnn.fit(
         dataset,
         N,
-        batch_size,
         n_epochs=epochs,
         lr=lr,
         batch_size=batch_size,
@@ -44,6 +44,9 @@ if FIT:
     plt.show()
 else:
     rnn = RNN.load("3bit_fully_trained.pt", input_size=3, output_size=3)
+    plot_recurrent_weights(rnn)
+    plt.show()
+
 
 # ------------------------------- Activity PCA ------------------------------- #
 X, Y = make_batch(N)

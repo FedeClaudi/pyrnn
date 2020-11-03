@@ -81,7 +81,7 @@ def make_batch(seq_len):
 
 
 def plot_predictions(model, seq_len, batch_size):
-    X, Y = make_batch(seq_len, batch_size)
+    X, Y = make_batch(seq_len)
     o, h = model.predict(X)
 
     f, axarr = plt.subplots(nrows=3, figsize=(12, 9))

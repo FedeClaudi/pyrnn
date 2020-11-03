@@ -6,17 +6,20 @@ def torchify(arr):
     return torch.from_numpy(arr.astype(np.float32)).reshape(1, 1, len(arr))
 
 
-def npify(tensor):
+def npify(tensor, flatten=True):
     if not isinstance(tensor, np.ndarray):
         tensor = tensor.detach().numpy()
 
-    ndims = len(tensor.shape)
-    if ndims == 3:
-        return tensor[0, 0, :]
-    elif ndims == 2:
-        return tensor[0, :]
+    if flatten:
+        ndims = len(tensor.shape)
+        if ndims == 3:
+            return tensor[0, 0, :]
+        elif ndims == 2:
+            return tensor[0, :]
+        else:
+            return tensor.ravel()
     else:
-        return tensor.ravel()
+        return tensor
 
 
 def prepend_dim(arr):
