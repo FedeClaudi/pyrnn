@@ -40,11 +40,10 @@ class FixedPoint(object):
         )
 
     @classmethod
-    def from_dict(cls, data_dict):
+    def from_dict(cls, fp_id, data_dict):
         h = np.array(data_dict["h"])
         constant_input = np.array(data_dict["constant_input"])
         jacobian = np.array(data_dict["jacobian"])
-        fp_id = np.array(data_dict["fp_id"])
         fp = cls(fp_id, h, constant_input, jacobian=jacobian)
         fp.analyse_stability()
         return fp
@@ -111,7 +110,6 @@ class FixedPoints(object):
         self.noise_scale = noise_scale or 0.0
 
         self.model = model
-        self.n_fps = 0
 
     def __repr__(self):
         return f"FixedPoints (# {self.fp_id} fps)"
@@ -224,7 +222,6 @@ class FixedPoints(object):
                     lr_decay_epoch,
                 )
                 if fp is not None:
-                    self.n_fps += 1
                     fixed_points = self._append_fixed_point(fixed_points, fp)
 
                 progress.remove_task(tid)
@@ -236,8 +233,8 @@ class FixedPoints(object):
         )
         if fixed_points:
             self.fixed_points = [
-                FixedPoint(self.n_fps, fp, constant_inputs[0], self.model)
-                for fp in fixed_points
+                FixedPoint(n, fp, constant_inputs[0], self.model)
+                for n, fp in enumerate(fixed_points)
             ]
             return self.fixed_points
         else:
@@ -251,4 +248,4 @@ class FixedPoints(object):
     def load_fixed_points(filepath):
         print(f"[{mocassin}]Loading fixed points from: [{orange}]{filepath}")
         data = load_json(filepath)
-        return [FixedPoint.from_dict(d) for d in data]
+        return [FixedPoint.from_dict(n, d) for n, d in enumerate(data)]

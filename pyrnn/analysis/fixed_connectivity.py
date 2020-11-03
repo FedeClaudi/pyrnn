@@ -4,7 +4,7 @@ from rich import print
 from rich.progress import track
 from pyinspect._colors import mocassin, orange
 
-# import networkx as nx
+import networkx as nx
 
 from pyrnn._utils import npify, torchify, pairs
 
@@ -49,32 +49,21 @@ class FixedPointsConnectivity(object):
         closest = np.argmin(dists)
         return self.fps[closest]
 
-    def _reconstruct_graph(self):
-        return
-        # se = [(o[0], o[1]) for o in self.outcomes]
+    def _reconstruct_graph(self, connections):
+        connections = {k: v for k, v in connections.items() if v > 0}
 
-        # node_combinations = list(combinations(self.fps, 2))
-        # c1 = {(s, e): 0 for s, e in node_combinations}
-        # c2 = {(e, s): 0 for s, e in node_combinations}
-        # counts = {**c1, **c2}
+        graph = nx.DiGraph()
+        for (fp1, fp2), w in connections.items():
+            graph.add_node(fp1.fp_id, n_unstable=fp1.n_unstable_modes, fp=fp1)
+            graph.add_node(fp2.fp_id, n_unstable=fp2.n_unstable_modes, fp=fp2)
 
-        # for start, end in se:
-        #     counts[start, end] += 1
-
-        # counts = {c: v for c, v in counts.items() if v > 0}
-
-        # G = nx.Graph()
-
-        # for (s, e), w in counts.items():
-        #     G.add_edge(s, e, weight=w)
-
-        # TODO graph construction and drawing double check
-        # a = 1
+            graph.add_edge(fp1.fp_id, fp2.fp_id, weight=w, fp1=fp1, fp2=fp2)
+        return graph
 
     def get_connectivity(self, const_input, max_iters=500):
         print(
-            f"[{mocassin}]Extracting fixed points connectivity",
-            f"([{orange}]{self.n_initial_conditions}[/{orange}] points)",
+            f"[{mocassin}]Extracting fixed points connectivity (",
+            f"[{orange}]{self.n_initial_conditions}[/{orange}][{mocassin}] points)",
         )
 
         initial_conditions = self._get_initial_conditions()
@@ -104,5 +93,5 @@ class FixedPointsConnectivity(object):
         )
         self.outcomes = outcomes
 
-        self._reconstruct_graph()
-        return outcomes
+        graph = self._reconstruct_graph(connections)
+        return outcomes, graph

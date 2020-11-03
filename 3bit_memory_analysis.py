@@ -2,7 +2,6 @@ import os
 import numpy as np
 import torch
 
-
 from pyrnn import RNN
 from pyrnn.tasks.three_bit_memory import (
     ThreeBitDataset,
@@ -12,12 +11,15 @@ from pyrnn.analysis import FixedPoints, FixedPointsConnectivity
 from pyrnn.plot import (
     plot_fixed_points,
     plot_fixed_points_connectivity_analysis,
+    plot_fixed_points_connectivity_graph,
 )
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 # ----------------------------------- setup ---------------------------------- #
 EXTRACT = False
+RENDER = False
+
 N = 512
 batch_size = 32
 
@@ -59,12 +61,18 @@ if EXTRACT:
 
 # ----------------------------------- Plot ----------------------------------- #
 fps = FixedPoints.load_fixed_points("fps.json")
-plot_fixed_points(h, fps, alpha=0.005)
+if RENDER:
+    plot_fixed_points(h, fps, alpha=0.005)
 
 # ----------------------------- fps connectivity ----------------------------- #
-fps_connectivity = FixedPointsConnectivity(rnn, fps, n_initial_conditions=2048)
-outcomes = fps_connectivity.get_connectivity(
+fps_connectivity = FixedPointsConnectivity(
+    rnn, fps, n_initial_conditions=12000
+)
+outcomes, graph = fps_connectivity.get_connectivity(
     constant_inputs[0], max_iters=1024
 )
 
-plot_fixed_points_connectivity_analysis(h, fps, outcomes, alpha=0.005)
+if RENDER:
+    plot_fixed_points_connectivity_analysis(h, fps, outcomes, alpha=0.005)
+
+plot_fixed_points_connectivity_graph(h, fps, graph, alpha=0.005)

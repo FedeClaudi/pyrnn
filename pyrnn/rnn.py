@@ -188,7 +188,9 @@ class RNN(nn.Module):
         hidden_trace = np.zeros((n_trials, seq_len, self.n_units))
         output_trace = np.zeros((n_trials, seq_len, self.output_size))
 
-        for trialn in track(range(n_trials), description="predicting..."):
+        for trialn in track(
+            range(n_trials), description=f"[{orange}]predicting..."
+        ):
             h = None
             for step in range(seq_len):
                 o, h = self(X[trialn, step, :].reshape(1, 1, -1), h)

@@ -4,7 +4,7 @@ import numpy as np
 from vedo import Lines, show, Spheres, Sphere, Tube
 from sklearn.decomposition import PCA
 from rich import print
-
+import networkx as nx
 
 from ._plot import clean_axes, points_from_pc
 from ._utils import prepend_dim, npify, flatten_h
@@ -29,6 +29,31 @@ def plot_recurrent_weights(model):
     clean_axes(f)
 
 
+def plot_fps_graph(graph):
+    node_colors_lookup = {
+        0: "lightseagreen",
+        1: "lightsalmon",
+        2: "powderblue",
+        3: "thistle",
+    }
+
+    n_stable = [int(d["n_unstable"]) for n, d in graph.nodes(data=True)]
+    nodes_colors = [node_colors_lookup.get(n, "salmon") for n in n_stable]
+
+    pos = nx.spring_layout(graph)
+    # nx.draw_networkx_edge_labels(graph, pos, edge_labels=None)
+    nx.draw(
+        graph,
+        pos,
+        with_labels=True,
+        node_color=nodes_colors,
+        node_size=200,
+        edge_color="seagreen",
+        edge_cmap=plt.cm.Greens,
+    )
+    plt.show()
+
+
 # ------------------------------- vedo renders ------------------------------- #
 def render(actors, _show=True):
     for act in actors:
@@ -37,6 +62,19 @@ def render(actors, _show=True):
     if _show:
         print("[green]Render ready")
         show(*actors)
+
+
+def get_fp_color(n, col_set=1):
+    if n == 0:
+        color = "seagreen" if col_set == 1 else "lightseagreen"
+    elif n == 1:
+        color = "salmon" if col_set == 1 else "lightsalmon"
+    elif n == 2:
+        color = "skyblue" if col_set == 1 else "powderblue"
+    else:
+        color = "magenta" if col_set == 1 else "purple"
+
+    return color
 
 
 def plot_state_history_pca_3d(
@@ -82,16 +120,7 @@ def plot_fixed_points(
     for fp in fixed_points:
         pos = t(fp.h.reshape(1, -1))[0, :]
 
-        # Color based on the number of unstable modes
-        if fp.n_unstable_modes == 0:
-            color = "seagreen"
-        elif fp.n_unstable_modes == 1:
-            color = "salmon"
-        elif fp.n_unstable_modes == 2:
-            color = "skyblue"
-        else:
-            color = "magenta"
-
+        color = get_fp_color(fp.n_unstable_modes)
         # plot unstable directions
         for stable, eigval, eigvec in fp.eigenmodes:
             if not stable:
@@ -135,20 +164,34 @@ def plot_fixed_points_connectivity_analysis(
 
     for start_fp, end_fp, trajectory in fps_connectivity:
         # Color based on the number of unstable modes
-        if start_fp.n_unstable_modes == 0:
-            color = "lightseagreen"
-        elif start_fp.n_unstable_modes == 1:
-            color = "lightsalmon"
-        elif start_fp.n_unstable_modes == 2:
-            color = "powderblue"
-        else:
-            color = "thistle"
+        color = get_fp_color(start_fp.n_unstable_modes, col_set=2)
 
         trajectory = [t(tp) for tp in trajectory]
         actors.append(Tube(trajectory, c=color, r=traj_radius, alpha=1))
         actors.append(
             Sphere(trajectory[0], r=initial_conditions_radius, c=color)
         )
+
+    render(actors, _show=_show)
+    return pca, actors
+
+
+def plot_fixed_points_connectivity_graph(
+    hidden_history, fixed_points, graph, edge_radius=0.1, _show=True, **kwargs
+):
+    pca, actors = plot_fixed_points(
+        hidden_history, fixed_points, scale=0.5, _show=False, **kwargs
+    )
+
+    def t(arr):
+        return pca.transform(prepend_dim(arr)).ravel()
+
+    for fp1, fp2, data in graph.edges(data=True):
+        p1 = t(data["fp1"].h)
+        p2 = t(data["fp2"].h)
+        color = get_fp_color(data["fp1"].n_unstable_modes, col_set=2)
+
+        actors.append(Tube([p1, p2], r=edge_radius, c=color))
 
     render(actors, _show=_show)
     return pca, actors
