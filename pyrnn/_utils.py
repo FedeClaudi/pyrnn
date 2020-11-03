@@ -10,8 +10,12 @@ def flatten_h(h):
         return h.reshape(-1, h.shape[-1])
 
 
-def torchify(arr):
-    return torch.from_numpy(arr.astype(np.float32)).reshape(1, 1, len(arr))
+def torchify(arr, flatten=True):
+    tensor = torch.from_numpy(arr.astype(np.float32))
+
+    if flatten:
+        tensor.reshape(1, 1, len(arr))
+    return tensor
 
 
 def npify(tensor, flatten=True):

@@ -7,6 +7,7 @@ from rich.progress import track
 import sys
 
 from ._progress import train_progress
+from ._utils import npify, torchify
 
 
 is_win = sys.platform == "win32"
@@ -32,12 +33,24 @@ class RecurrentWeightsInitializer(object):
             self._set_connectivity(connectivity)
 
     def _remove_autopses(self):
-        # TODO
+        np.fill_diagonal(self.weights, 0)
         return
 
     def _apply_dale_ratio(self, dale_ratio):
-        # TODO
-        return
+        if dale_ratio < 0 or dale_ratio > 1:
+            raise ValueError(f"Invalid dale ratio value of: {dale_ratio}")
+
+        n_units = len(self.weights)
+        n_excitatory = int(np.floor(n_units * dale_ratio))
+
+        weights = np.random.uniform(0, 1, n_units * n_units).reshape(
+            n_units, n_units
+        )
+
+        dale_vec = np.ones(n_units) * -1  # 1 for excitatory, -1 for inh
+        dale_vec[:n_excitatory] = 1
+
+        self.weights = weights * dale_vec
 
     def _set_connectivity(self, connectivity):
         # see: https://colab.research.google.com/github/murraylab/PsychRNN/blob/master/docs/notebooks/BiologicalConstraints.ipynb
@@ -58,6 +71,9 @@ class RNN(nn.Module):
         output_size=1,
         n_units=50,
         free_output_weights=False,
+        dale_ratio=None,
+        autopses=True,
+        connectivity=None,
     ):
 
         super(RNN, self).__init__()
@@ -80,10 +96,25 @@ class RNN(nn.Module):
             for p in self.output_layer.parameters():
                 p.requires_grad = False
 
+        self._set_recurrent_weights(dale_ratio, autopses, connectivity)
         self._get_recurrent_weights()
 
     def _get_recurrent_weights(self):
-        self.recurrent_weights = self.rnn_layer.weight_hh_l0
+        self.recurrent_weights = npify(
+            self.rnn_layer.weight_hh_l0, flatten=False
+        )
+
+    def _set_recurrent_weights(self, dale_ratio, autopses, connectivity):
+        iw = npify(self.rnn_layer.weight_hh_l0, flatten=False)
+        initializer = RecurrentWeightsInitializer(
+            iw,
+            dale_ratio=dale_ratio,
+            autopses=autopses,
+            connectivity=connectivity,
+        )
+        self.rnn_layer.weight_hh_l0 = nn.Parameter(
+            torchify(initializer.weights, flatten=False)
+        )
 
     def _show(self):
         print(self)

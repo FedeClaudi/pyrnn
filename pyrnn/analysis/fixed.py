@@ -207,7 +207,7 @@ class FixedPoints(object):
 
                 # Add a second progress bar for each initial conditon
                 tid = progress.add_task(
-                    f"[{mocassin}] Init.cond.: {nhid}/{n_initial_conditions} | ({len(fixed_points)})",
+                    f"[{mocassin}] Init.cond.: {nhid}/{n_initial_conditions} | ({len(fixed_points)}/{max_fixed_points})",
                     start=True,
                     total=max_iters * len(constant_inputs),
                     fpspeed=None,

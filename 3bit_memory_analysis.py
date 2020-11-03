@@ -17,14 +17,14 @@ from pyrnn.plot import (
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 # ----------------------------------- setup ---------------------------------- #
-EXTRACT = False
-RENDER = False
+EXTRACT = True
+RENDER = True
 
 N = 512
 batch_size = 32
 
 
-rnn = RNN.load("3bit_fully_trained.pt", input_size=3, output_size=3)
+rnn = RNN.load("test.pt", input_size=3, output_size=3)
 
 dataloader = torch.utils.data.DataLoader(
     ThreeBitDataset(N, dataset_length=batch_size),
@@ -54,13 +54,13 @@ if EXTRACT:
         n_initial_conditions=256,
         max_iters=5000,
         lr_decay_epoch=1500,
-        max_fixed_points=26,
+        max_fixed_points=27,
     )
 
-    fp_finder.save_fixed_points("fps.json")
+    fp_finder.save_fixed_points("fps2.json")
 
 # ----------------------------------- Plot ----------------------------------- #
-fps = FixedPoints.load_fixed_points("fps.json")
+fps = FixedPoints.load_fixed_points("fps2.json")
 if RENDER:
     plot_fixed_points(h, fps, alpha=0.005)
 

@@ -5,6 +5,7 @@ from vedo import Lines, show, Spheres, Sphere, Tube
 from sklearn.decomposition import PCA
 from rich import print
 import networkx as nx
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from ._plot import clean_axes, points_from_pc
 from ._utils import prepend_dim, npify, flatten_h
@@ -24,8 +25,14 @@ def plot_training_loss(loss_history):
 def plot_recurrent_weights(model):
     f, ax = plt.subplots(figsize=(10, 10))
 
-    ax.imshow(npify(model.recurrent_weights, flatten=False), cmap="bwr")
-    ax.set(xticks=[], yticks=[])
+    img = ax.imshow(npify(model.recurrent_weights, flatten=False), cmap="bwr")
+
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="5%", pad=0.05)
+    f.colorbar(img, cax=cax, orientation="vertical")
+
+    ax.set(xticks=[], yticks=[], xlabel="units", ylabel="units")
+    ax.axis("equal")
     clean_axes(f)
 
 

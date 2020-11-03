@@ -33,9 +33,10 @@ if __name__ == "__main__":
             lr=lr,
             batch_size=batch_size,
             input_length=N,
+            autopses=False,
         )
         plot_training_loss(loss_history)
-        rnn.save("3bit_fully_trained.pt")
+        rnn.save("test.pt")
 
         plot_predictions(rnn, N, batch_size)
         plt.show()
