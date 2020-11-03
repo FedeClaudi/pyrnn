@@ -1,6 +1,11 @@
 import numpy as np
 import torch
 
+def flatten_h(h):
+    if len(h.shape) < 3:
+        return h
+    else:
+        return h.reshape(-1, h.shape[-1])
 
 def torchify(arr):
     return torch.from_numpy(arr.astype(np.float32)).reshape(1, 1, len(arr))

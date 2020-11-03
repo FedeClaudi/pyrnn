@@ -5,7 +5,8 @@ import torch
 
 from pyrnn import RNN
 from pyrnn.tasks.three_bit_memory import (
-    make_batch,
+    ThreeBitDataset,
+    is_win,
 )
 from pyrnn.analysis import FixedPoints, FixedPointsConnectivity
 from pyrnn.plot import (
@@ -17,15 +18,22 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 # ----------------------------------- setup ---------------------------------- #
 EXTRACT = False
-N = 10000
-batch_size = 64
+N = 1024
+batch_size = 256
 epochs = 100
 lr = 0.005
 
 
 rnn = RNN.load("3bit_fully_trained.pt", input_size=3, output_size=3)
 
-X, Y = make_batch(N)
+dataloader = torch.utils.data.DataLoader(
+        ThreeBitDataset(N, dataset_length=batch_size),
+        batch_size=batch_size,
+        num_workers=0 if is_win else 2,
+        shuffle=True,
+        worker_init_fn=lambda x: np.random.seed(),
+    )
+X, Y = list(dataloader)[0]
 o, h = rnn.predict_with_history(X)
 
 constant_inputs = [
@@ -36,16 +44,16 @@ constant_inputs = [
 if EXTRACT:
     fp_finder = FixedPoints(
         rnn,
-        speed_tol=1e-03,
-        noise_scale=0.35,
+        speed_tol=3e-03,
+        noise_scale=1.5,
     )
 
     fp_finder.find_fixed_points(
         h,
         constant_inputs,
-        n_initial_conditions=1024,
-        max_iters=2000,
-        lr_decay_epoch=500,
+        n_initial_conditions=256,
+        max_iters=5000,
+        lr_decay_epoch=1500,
         max_fixed_points=26,
     )
 
@@ -53,7 +61,7 @@ if EXTRACT:
 
 # ----------------------------------- Plot ----------------------------------- #
 fps = FixedPoints.load_fixed_points("fps.json")
-plot_fixed_points(h, fps, alpha=0.01)
+plot_fixed_points(h, fps, alpha=0.005)
 
 # ----------------------------- fps connectivity ----------------------------- #
 fps_connectivity = FixedPointsConnectivity(rnn, fps, n_initial_conditions=200)
@@ -61,4 +69,4 @@ outcomes = fps_connectivity.get_connectivity(
     constant_inputs[0], max_iters=1024
 )
 
-plot_fixed_points_connectivity_analysis(h, fps, outcomes, alpha=0.01)
+plot_fixed_points_connectivity_analysis(h, fps, outcomes, alpha=0.005)

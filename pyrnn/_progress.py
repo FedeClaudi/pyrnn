@@ -58,7 +58,7 @@ class FPSpeedColumn(TextColumn):
         if task.fields["fpspeed"] is not None:
             return f"[{mocassin}]fp speed: [bold {orange}]{task.fields['fpspeed']:.6e}"
         else:
-            return f"[{mocassin}]fp speed: [bold {orange}]nan"
+            return ''
 
 
 train_progress = Progress(
@@ -83,4 +83,6 @@ fixed_points_progress = Progress(
     "[progress.percentage]{task.percentage:>3.0f}%",
     "•",
     FPSpeedColumn(),
+    "•",
+    TimeRemainingColumn(),
 )

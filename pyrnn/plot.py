@@ -7,7 +7,7 @@ from rich import print
 
 
 from ._plot import clean_axes, points_from_pc
-from ._utils import prepend_dim, npify
+from ._utils import prepend_dim, npify, flatten_h
 
 
 # -------------------------------- matplotlib -------------------------------- #
@@ -46,6 +46,7 @@ def plot_state_history_pca_3d(
     Fits a PCA to high dim hidden state history
     and plots the result in 3d with vedo
     """
+    hidden_history = flatten_h(hidden_history)
 
     pca = PCA(n_components=3).fit(hidden_history)
 
@@ -65,6 +66,8 @@ def plot_state_history_pca_3d(
 def plot_fixed_points(
     hidden_history, fixed_points, scale=0.5, _show=True, **kwargs
 ):
+    hidden_history = flatten_h(hidden_history)
+
     pca, actors = plot_state_history_pca_3d(
         hidden_history, **kwargs, _show=False
     )
@@ -109,6 +112,8 @@ def plot_fixed_points_connectivity_analysis(
     _show=True,
     **kwargs,
 ):
+    hidden_history = flatten_h(hidden_history)
+    
     pca, actors = plot_fixed_points(
         hidden_history, fixed_points, scale=0.5, _show=False, **kwargs
     )

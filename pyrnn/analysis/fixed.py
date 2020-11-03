@@ -7,6 +7,7 @@ from collections import namedtuple
 
 from pyrnn._progress import fixed_points_progress
 from pyrnn._io import save_json, load_json
+from pyrnn._utils import flatten_h
 
 eig_mode = namedtuple("eigmode", "stable, eigv, eigvec")
 
@@ -48,8 +49,11 @@ class FixedPoint(object):
         _o, _h = self.model(self.constant_input, h)
 
         for i in range(n_units):
+            output = torch.zeros(1, 1, n_units)
+            output[0, 0, i] = 1
+
             g = torch.autograd.grad(
-                _h, h, grad_outputs=self.constant_input, retain_graph=True
+                _h, h, grad_outputs=output, retain_graph=True
             )[0]
             jacobian[:, i : i + 1] = g[0, 0, :].reshape(-1, 1)
 
@@ -162,6 +166,8 @@ class FixedPoints(object):
         lr_decay_epoch=500,
         max_fixed_points=100,
     ):
+        # Flatten hidden
+        hidden = flatten_h(hidden)
 
         print(f"[{mocassin}]Looking for fixed points.")
         initial_conditions = self._get_initial_conditions(
@@ -170,10 +176,22 @@ class FixedPoints(object):
 
         fixed_points = []
         with fixed_points_progress as progress:
+            main_tid = progress.add_task(
+                    f"[bold {orange}] Finding fixed points",
+                    start=True,
+                    total=n_initial_conditions,
+                    fpspeed=None,
+                )
+
             # loop over initial conditions
             for nhid, hid in enumerate(initial_conditions):
+                progress.update(
+                    main_tid, completed=nhid, fpspeed=None,
+                )
+
+                # Add a second progress bar for each initial conditon
                 tid = progress.add_task(
-                    f"[bold green] Init.cond.: {nhid}/{n_initial_conditions} | found: {len(fixed_points)}",
+                    f"[{mocassin}] Init.cond.: {nhid}/{n_initial_conditions} | ({len(fixed_points)})",
                     start=True,
                     total=max_iters * len(constant_inputs),
                     fpspeed=None,

@@ -4,7 +4,12 @@ from rich import print
 from pyinspect._colors import mocassin, orange
 import numpy as np
 from rich.progress import track
+import sys
+
 from ._progress import train_progress
+
+
+is_win = sys.platform == 'win32'
 
 
 class RNN(nn.Module):
@@ -92,12 +97,12 @@ class RNN(nn.Module):
         train_dataloader = torch.utils.data.DataLoader(
             dataset,
             batch_size=batch_size,
-            num_workers=2,
+            num_workers=0 if is_win else 2,
             shuffle=True,
             worker_init_fn=lambda x: np.random.seed(),
         )
 
-        optimizer = torch.optim.SGD(self.parameters(), lr=lr)
+        optimizer = torch.optim.Adam(self.parameters(), lr=lr)
         criterion = torch.nn.MSELoss()
 
         losses = []
@@ -107,7 +112,7 @@ class RNN(nn.Module):
                 start=True,
                 total=n_epochs,
                 loss=0,
-                lr=0.005,
+                lr=lr,
             )
 
             # loop over epochs
@@ -143,14 +148,17 @@ class RNN(nn.Module):
     def predict_with_history(self, X):
         print(f"[{mocassin}]Predicting input step by step")
         seq_len = X.shape[1]
-        h = None
-        hidden_trace = np.zeros((seq_len, self.n_units))
-        output_trace = np.zeros((seq_len, self.output_size))
+        n_trials = X.shape[0]
+        
+        hidden_trace = np.zeros((n_trials, seq_len, self.n_units))
+        output_trace = np.zeros((n_trials, seq_len, self.output_size))
 
-        for step in track(range(seq_len), description="predicting..."):
-            o, h = self(X[0, step, :].reshape(1, 1, -1), h)
-            hidden_trace[step, :] = h.detach().numpy()
-            output_trace[step, :] = o.detach().numpy()
+        for trialn in track(range(n_trials), description='predicting...'):
+            h = None
+            for step in range(seq_len):
+                o, h = self(X[trialn, step, :].reshape(1, 1, -1), h)
+                hidden_trace[trialn, step, :] = h.detach().numpy()
+                output_trace[trialn, step, :] = o.detach().numpy()
 
         return output_trace, hidden_trace
 

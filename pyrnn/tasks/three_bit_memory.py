@@ -5,6 +5,7 @@ import torch
 from pyinspect._colors import salmon, dimgreen, lilla
 from pyrnn._plot import clean_axes
 import torch.utils.data as data
+import sys
 
 """
     3 bit memory task
@@ -14,6 +15,8 @@ import torch.utils.data as data
     each input corresponds to noe output, the output
     is a `memory` of which state the input is in (1, -1)
 """
+
+is_win = sys.platform == 'win32'
 
 
 class ThreeBitDataset(data.Dataset):
@@ -71,7 +74,7 @@ def make_batch(seq_len):
     dataloader = torch.utils.data.DataLoader(
         ThreeBitDataset(seq_len, dataset_length=1),
         batch_size=1,
-        num_workers=2,
+        num_workers=0 if is_win else 2,
         shuffle=True,
         worker_init_fn=lambda x: np.random.seed(),
     )
