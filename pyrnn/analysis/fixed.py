@@ -13,10 +13,11 @@ eig_mode = namedtuple("eigmode", "stable, eigv, eigvec")
 
 
 class FixedPoint(object):
-    def __init__(self, h, constant_input, model=None, jacobian=None):
+    def __init__(self, fp_id, h, constant_input, model=None, jacobian=None):
         self.constant_input = constant_input
         self.h = h
         self.model = model
+        self.fp_id = fp_id
 
         if jacobian is None:
             self.compute_jacobian()
@@ -24,8 +25,15 @@ class FixedPoint(object):
         else:
             self.jacobian = jacobian
 
+    def __repr__(self):
+        return f"FixedPoint ({self.fp_id})"
+
+    def __str__(self):
+        return f"FixedPoint ({self.fp_id})"
+
     def to_dict(self):
         return dict(
+            fp_id=self.fp_id,
             h=self.h.tolist(),
             constant_input=self.constant_input.tolist(),
             jacobian=self.jacobian.tolist(),
@@ -36,7 +44,8 @@ class FixedPoint(object):
         h = np.array(data_dict["h"])
         constant_input = np.array(data_dict["constant_input"])
         jacobian = np.array(data_dict["jacobian"])
-        fp = cls(h, constant_input, jacobian=jacobian)
+        fp_id = np.array(data_dict["fp_id"])
+        fp = cls(fp_id, h, constant_input, jacobian=jacobian)
         fp.analyse_stability()
         return fp
 
@@ -102,6 +111,13 @@ class FixedPoints(object):
         self.noise_scale = noise_scale or 0.0
 
         self.model = model
+        self.n_fps = 0
+
+    def __repr__(self):
+        return f"FixedPoints (# {self.fp_id} fps)"
+
+    def __str__(self):
+        return f"FixedPoints (# {self.fp_id} fps)"
 
     def _get_initial_conditions(self, hidden, n_initial_conditions):
         random_times = np.random.randint(0, len(hidden), n_initial_conditions)
@@ -177,16 +193,18 @@ class FixedPoints(object):
         fixed_points = []
         with fixed_points_progress as progress:
             main_tid = progress.add_task(
-                    f"[bold {orange}] Finding fixed points",
-                    start=True,
-                    total=n_initial_conditions,
-                    fpspeed=None,
-                )
+                f"[bold {orange}] Finding fixed points",
+                start=True,
+                total=n_initial_conditions,
+                fpspeed=None,
+            )
 
             # loop over initial conditions
             for nhid, hid in enumerate(initial_conditions):
                 progress.update(
-                    main_tid, completed=nhid, fpspeed=None,
+                    main_tid,
+                    completed=nhid,
+                    fpspeed=None,
                 )
 
                 # Add a second progress bar for each initial conditon
@@ -206,6 +224,7 @@ class FixedPoints(object):
                     lr_decay_epoch,
                 )
                 if fp is not None:
+                    self.n_fps += 1
                     fixed_points = self._append_fixed_point(fixed_points, fp)
 
                 progress.remove_task(tid)
@@ -217,7 +236,7 @@ class FixedPoints(object):
         )
         if fixed_points:
             self.fixed_points = [
-                FixedPoint(fp, constant_inputs[0], self.model)
+                FixedPoint(self.n_fps, fp, constant_inputs[0], self.model)
                 for fp in fixed_points
             ]
             return self.fixed_points
@@ -230,5 +249,6 @@ class FixedPoints(object):
 
     @staticmethod
     def load_fixed_points(filepath):
+        print(f"[{mocassin}]Loading fixed points from: [{orange}]{filepath}")
         data = load_json(filepath)
         return [FixedPoint.from_dict(d) for d in data]

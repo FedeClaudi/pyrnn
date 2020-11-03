@@ -1,11 +1,14 @@
 import numpy as np
 import torch
+from itertools import combinations_with_replacement as combinations
+
 
 def flatten_h(h):
     if len(h.shape) < 3:
         return h
     else:
         return h.reshape(-1, h.shape[-1])
+
 
 def torchify(arr):
     return torch.from_numpy(arr.astype(np.float32)).reshape(1, 1, len(arr))
@@ -29,3 +32,11 @@ def npify(tensor, flatten=True):
 
 def prepend_dim(arr):
     return arr.reshape(1, -1)
+
+
+def pairs(iterable):
+    """
+    returns all ordered pairs of items from an iterable
+    """
+    combos = list(combinations(iterable, 2))
+    return combos + [(b, a) for a, b in combos]

@@ -18,21 +18,19 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 # ----------------------------------- setup ---------------------------------- #
 EXTRACT = False
-N = 1024
-batch_size = 256
-epochs = 100
-lr = 0.005
+N = 512
+batch_size = 32
 
 
 rnn = RNN.load("3bit_fully_trained.pt", input_size=3, output_size=3)
 
 dataloader = torch.utils.data.DataLoader(
-        ThreeBitDataset(N, dataset_length=batch_size),
-        batch_size=batch_size,
-        num_workers=0 if is_win else 2,
-        shuffle=True,
-        worker_init_fn=lambda x: np.random.seed(),
-    )
+    ThreeBitDataset(N, dataset_length=batch_size),
+    batch_size=batch_size,
+    num_workers=0 if is_win else 2,
+    shuffle=True,
+    worker_init_fn=lambda x: np.random.seed(),
+)
 X, Y = list(dataloader)[0]
 o, h = rnn.predict_with_history(X)
 
@@ -64,7 +62,7 @@ fps = FixedPoints.load_fixed_points("fps.json")
 plot_fixed_points(h, fps, alpha=0.005)
 
 # ----------------------------- fps connectivity ----------------------------- #
-fps_connectivity = FixedPointsConnectivity(rnn, fps, n_initial_conditions=200)
+fps_connectivity = FixedPointsConnectivity(rnn, fps, n_initial_conditions=2048)
 outcomes = fps_connectivity.get_connectivity(
     constant_inputs[0], max_iters=1024
 )

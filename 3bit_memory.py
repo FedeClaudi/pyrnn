@@ -17,11 +17,11 @@ batch_size = 256
 epochs = 350
 lr = 0.005
 
-FIT = False
+FIT = True
 
 
 # ------------------------------- Fit/load RNN ------------------------------- #
-if __name__ == '__main__':
+if __name__ == "__main__":
     if FIT:
         dataset = ThreeBitDataset(N, dataset_length=5)
 
@@ -41,7 +41,6 @@ if __name__ == '__main__':
         plt.show()
     else:
         rnn = RNN.load("3bit_fully_trained.pt", input_size=3, output_size=3)
-
 
     # ------------------------------- Activity PCA ------------------------------- #
     X, Y = make_batch(N)

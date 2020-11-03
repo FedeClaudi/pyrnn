@@ -40,7 +40,7 @@ def render(actors, _show=True):
 
 
 def plot_state_history_pca_3d(
-    hidden_history, lw=30, alpha=0.1, color="k", pts=None, _show=True
+    hidden_history, lw=20, alpha=0.1, color="k", pts=None, _show=True
 ):
     """
     Fits a PCA to high dim hidden state history
@@ -64,7 +64,12 @@ def plot_state_history_pca_3d(
 
 
 def plot_fixed_points(
-    hidden_history, fixed_points, scale=0.5, _show=True, **kwargs
+    hidden_history,
+    fixed_points,
+    scale=0.5,
+    _show=True,
+    fpoint_radius=0.05,
+    **kwargs,
 ):
     hidden_history = flatten_h(hidden_history)
 
@@ -95,7 +100,12 @@ def plot_fixed_points(
                 p1 = pos + t(np.real(delta).reshape(1, -1))
 
                 actors.append(
-                    Tube([p1.ravel(), p0.ravel()], c=color, r=0.05, alpha=1)
+                    Tube(
+                        [p1.ravel(), p0.ravel()],
+                        c=color,
+                        r=fpoint_radius,
+                        alpha=1,
+                    )
                 )
 
         actors.append(Sphere(pos, c=color, r=0.1))
@@ -110,10 +120,12 @@ def plot_fixed_points_connectivity_analysis(
     fps_connectivity,
     scale=0.5,
     _show=True,
+    traj_radius=0.01,
+    initial_conditions_radius=0.05,
     **kwargs,
 ):
     hidden_history = flatten_h(hidden_history)
-    
+
     pca, actors = plot_fixed_points(
         hidden_history, fixed_points, scale=0.5, _show=False, **kwargs
     )
@@ -121,10 +133,22 @@ def plot_fixed_points_connectivity_analysis(
     def t(arr):
         return pca.transform(prepend_dim(arr)).ravel()
 
-    for start_point, end_point, trajectory in fps_connectivity:
+    for start_fp, end_fp, trajectory in fps_connectivity:
+        # Color based on the number of unstable modes
+        if start_fp.n_unstable_modes == 0:
+            color = "lightseagreen"
+        elif start_fp.n_unstable_modes == 1:
+            color = "lightsalmon"
+        elif start_fp.n_unstable_modes == 2:
+            color = "powderblue"
+        else:
+            color = "thistle"
+
         trajectory = [t(tp) for tp in trajectory]
-        actors.append(Tube(trajectory, c="lightpink", r=0.02, alpha=1))
-        actors.append(Sphere(trajectory[0], r=0.1, c="lightpink"))
+        actors.append(Tube(trajectory, c=color, r=traj_radius, alpha=1))
+        actors.append(
+            Sphere(trajectory[0], r=initial_conditions_radius, c=color)
+        )
 
     render(actors, _show=_show)
     return pca, actors

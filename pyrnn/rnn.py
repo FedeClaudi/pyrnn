@@ -9,7 +9,42 @@ import sys
 from ._progress import train_progress
 
 
-is_win = sys.platform == 'win32'
+is_win = sys.platform == "win32"
+
+
+class RecurrentWeightsInitializer(object):
+    def __init__(
+        self,
+        initial_weights,
+        dale_ratio=None,
+        autopses=True,
+        connectivity=None,
+    ):
+        self.weights = initial_weights
+
+        if dale_ratio is not None:
+            self._apply_dale_ratio(dale_ratio)
+
+        if not autopses:
+            self._remove_autopses()
+
+        if connectivity is not None:
+            self._set_connectivity(connectivity)
+
+    def _remove_autopses(self):
+        # TODO
+        return
+
+    def _apply_dale_ratio(self, dale_ratio):
+        # TODO
+        return
+
+    def _set_connectivity(self, connectivity):
+        # see: https://colab.research.google.com/github/murraylab/PsychRNN/blob/master/docs/notebooks/BiologicalConstraints.ipynb
+        # and: https://github.com/murraylab/PsychRNN/blob/master/psychrnn/backend/initializations.py
+        raise NotImplementedError(
+            "Need to set up a method to enforce connectivity constraints"
+        )
 
 
 class RNN(nn.Module):
@@ -149,11 +184,11 @@ class RNN(nn.Module):
         print(f"[{mocassin}]Predicting input step by step")
         seq_len = X.shape[1]
         n_trials = X.shape[0]
-        
+
         hidden_trace = np.zeros((n_trials, seq_len, self.n_units))
         output_trace = np.zeros((n_trials, seq_len, self.output_size))
 
-        for trialn in track(range(n_trials), description='predicting...'):
+        for trialn in track(range(n_trials), description="predicting..."):
             h = None
             for step in range(seq_len):
                 o, h = self(X[trialn, step, :].reshape(1, 1, -1), h)

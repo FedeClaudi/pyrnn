@@ -3,10 +3,10 @@ import numpy as np
 from rich import print
 from rich.progress import track
 from pyinspect._colors import mocassin, orange
-from itertools import combinations_with_replacement as combinations
-import networkx as nx
 
-from pyrnn._utils import npify, torchify
+# import networkx as nx
+
+from pyrnn._utils import npify, torchify, pairs
 
 
 class FixedPointsConnectivity(object):
@@ -50,22 +50,23 @@ class FixedPointsConnectivity(object):
         return self.fps[closest]
 
     def _reconstruct_graph(self):
-        se = [(o[0], o[1]) for o in self.outcomes]
+        return
+        # se = [(o[0], o[1]) for o in self.outcomes]
 
-        node_combinations = list(combinations(self.fps, 2))
-        c1 = {(s, e): 0 for s, e in node_combinations}
-        c2 = {(e, s): 0 for s, e in node_combinations}
-        counts = {**c1, **c2}
+        # node_combinations = list(combinations(self.fps, 2))
+        # c1 = {(s, e): 0 for s, e in node_combinations}
+        # c2 = {(e, s): 0 for s, e in node_combinations}
+        # counts = {**c1, **c2}
 
-        for start, end in se:
-            counts[start, end] += 1
+        # for start, end in se:
+        #     counts[start, end] += 1
 
-        counts = {c: v for c, v in counts.items() if v > 0}
+        # counts = {c: v for c, v in counts.items() if v > 0}
 
-        G = nx.Graph()
+        # G = nx.Graph()
 
-        for (s, e), w in counts.items():
-            G.add_edge(s, e, weight=w)
+        # for (s, e), w in counts.items():
+        #     G.add_edge(s, e, weight=w)
 
         # TODO graph construction and drawing double check
         # a = 1
@@ -78,8 +79,10 @@ class FixedPointsConnectivity(object):
 
         initial_conditions = self._get_initial_conditions()
         outcomes = []
+        connections = {p: 0 for p in pairs(self.fps)}
+
         for start_fp, ic in track(
-            initial_conditions, description="getting connectivity"
+            initial_conditions, description=f"[{orange}]getting connectivity"
         ):
             h = ic
             trajectory = []
@@ -91,9 +94,9 @@ class FixedPointsConnectivity(object):
                 trajectory.append(npify(_h))
 
                 if self._at_fp(_h):
-                    outcomes.append(
-                        (start_fp, self._get_closest_fp(_h), trajectory)
-                    )
+                    end_fp = self._get_closest_fp(_h)
+                    outcomes.append((start_fp, end_fp, trajectory))
+                    connections[(start_fp, end_fp)] += 1
                     break
 
         print(
