@@ -191,7 +191,9 @@ def plot_fixed_points_connectivity_graph(
         p2 = t(data["fp2"].h)
         color = get_fp_color(data["fp1"].n_unstable_modes, col_set=2)
 
-        actors.append(Tube([p1, p2], r=edge_radius, c=color))
+        actors.append(
+            Tube([p1, p2], r=edge_radius, c=color, alpha=data["prob"])
+        )
 
     render(actors, _show=_show)
     return pca, actors

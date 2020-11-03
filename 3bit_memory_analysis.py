@@ -66,7 +66,10 @@ if RENDER:
 
 # ----------------------------- fps connectivity ----------------------------- #
 fps_connectivity = FixedPointsConnectivity(
-    rnn, fps, n_initial_conditions=12000
+    rnn,
+    fps,
+    n_initial_conditions=12000,
+    noise_scale=0.2,
 )
 outcomes, graph = fps_connectivity.get_connectivity(
     constant_inputs[0], max_iters=1024
@@ -75,4 +78,4 @@ outcomes, graph = fps_connectivity.get_connectivity(
 if RENDER:
     plot_fixed_points_connectivity_analysis(h, fps, outcomes, alpha=0.005)
 
-plot_fixed_points_connectivity_graph(h, fps, graph, alpha=0.005)
+    plot_fixed_points_connectivity_graph(h, fps, graph, alpha=0.005)

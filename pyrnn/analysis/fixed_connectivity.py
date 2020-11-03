@@ -38,7 +38,7 @@ class FixedPointsConnectivity(object):
             )
 
         inits = [(fp, torchify(ic)) for fp, ic in inits]
-        return inits
+        return inits, inits_per_fp
 
     def _at_fp(self, fp):
         dists = [euclidean(f.h, fp) for f in self.fps]
@@ -49,7 +49,7 @@ class FixedPointsConnectivity(object):
         closest = np.argmin(dists)
         return self.fps[closest]
 
-    def _reconstruct_graph(self, connections):
+    def _reconstruct_graph(self, connections, inits_per_fp):
         connections = {k: v for k, v in connections.items() if v > 0}
 
         graph = nx.DiGraph()
@@ -57,7 +57,14 @@ class FixedPointsConnectivity(object):
             graph.add_node(fp1.fp_id, n_unstable=fp1.n_unstable_modes, fp=fp1)
             graph.add_node(fp2.fp_id, n_unstable=fp2.n_unstable_modes, fp=fp2)
 
-            graph.add_edge(fp1.fp_id, fp2.fp_id, weight=w, fp1=fp1, fp2=fp2)
+            graph.add_edge(
+                fp1.fp_id,
+                fp2.fp_id,
+                weight=w,
+                fp1=fp1,
+                fp2=fp2,
+                prob=w / inits_per_fp,
+            )
         return graph
 
     def get_connectivity(self, const_input, max_iters=500):
@@ -66,7 +73,7 @@ class FixedPointsConnectivity(object):
             f"[{orange}]{self.n_initial_conditions}[/{orange}][{mocassin}] points)",
         )
 
-        initial_conditions = self._get_initial_conditions()
+        initial_conditions, inits_per_fp = self._get_initial_conditions()
         outcomes = []
         connections = {p: 0 for p in pairs(self.fps)}
 
@@ -93,5 +100,5 @@ class FixedPointsConnectivity(object):
         )
         self.outcomes = outcomes
 
-        graph = self._reconstruct_graph(connections)
+        graph = self._reconstruct_graph(connections, inits_per_fp)
         return outcomes, graph
