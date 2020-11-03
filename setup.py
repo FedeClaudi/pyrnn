@@ -12,6 +12,7 @@ requirements = [
     "seaborn",
     "pytorch",
     "numpy",
+    "networkx",
 ]
 
 setup(
