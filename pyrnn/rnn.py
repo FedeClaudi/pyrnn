@@ -22,15 +22,16 @@ class RecurrentWeightsInitializer(object):
         connectivity=None,
     ):
         self.weights = initial_weights
+        self.connectivity = np.ones_like(self.weights)
+
+        if connectivity is not None:
+            self._set_connectivity(connectivity)
 
         if dale_ratio is not None:
             self._apply_dale_ratio(dale_ratio)
 
         if not autopses:
             self._remove_autopses()
-
-        if connectivity is not None:
-            self._set_connectivity(connectivity)
 
     def _remove_autopses(self):
         np.fill_diagonal(self.weights, 0)
@@ -43,14 +44,10 @@ class RecurrentWeightsInitializer(object):
         n_units = len(self.weights)
         n_excitatory = int(np.floor(n_units * dale_ratio))
 
-        weights = np.random.uniform(0, 1, n_units * n_units).reshape(
-            n_units, n_units
-        )
+        dale_vec = np.ones(n_units)
+        dale_vec[n_excitatory:] = -1
 
-        dale_vec = np.ones(n_units) * -1  # 1 for excitatory, -1 for inh
-        dale_vec[:n_excitatory] = 1
-
-        self.weights = weights * dale_vec
+        self.weights = np.matmul(np.abs(self.weights), np.diag(dale_vec))
 
     def _set_connectivity(self, connectivity):
         # see: https://colab.research.google.com/github/murraylab/PsychRNN/blob/master/docs/notebooks/BiologicalConstraints.ipynb

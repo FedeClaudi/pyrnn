@@ -20,11 +20,11 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 EXTRACT = True
 RENDER = True
 
-N = 512
-batch_size = 32
+N = 2048  # 512
+batch_size = 128  # 32
 
 
-rnn = RNN.load("test.pt", input_size=3, output_size=3)
+rnn = RNN.load("dale_ratio.pt", input_size=3, output_size=3)
 
 dataloader = torch.utils.data.DataLoader(
     ThreeBitDataset(N, dataset_length=batch_size),
@@ -57,10 +57,10 @@ if EXTRACT:
         max_fixed_points=27,
     )
 
-    fp_finder.save_fixed_points("fps2.json")
+    fp_finder.save_fixed_points("fps_dale.json")
 
 # ----------------------------------- Plot ----------------------------------- #
-fps = FixedPoints.load_fixed_points("fps2.json")
+fps = FixedPoints.load_fixed_points("fps_dale.json")
 if RENDER:
     plot_fixed_points(h, fps, alpha=0.005)
 

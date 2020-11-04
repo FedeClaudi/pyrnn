@@ -12,7 +12,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 # ---------------------------------- Params ---------------------------------- #
 
-N = 300
+N = 1024
 batch_size = 256
 epochs = 350
 lr = 0.005
@@ -23,9 +23,9 @@ FIT = True
 # ------------------------------- Fit/load RNN ------------------------------- #
 if __name__ == "__main__":
     if FIT:
-        dataset = ThreeBitDataset(N, dataset_length=5)
+        dataset = ThreeBitDataset(N, dataset_length=8)
 
-        rnn = RNN(input_size=3, output_size=3)
+        rnn = RNN(input_size=3, output_size=3, autopses=False, dale_ratio=0.8)
         loss_history = rnn.fit(
             dataset,
             N,
@@ -33,15 +33,14 @@ if __name__ == "__main__":
             lr=lr,
             batch_size=batch_size,
             input_length=N,
-            autopses=False,
         )
         plot_training_loss(loss_history)
-        rnn.save("test.pt")
+        rnn.save("dale_ratio.pt")
 
         plot_predictions(rnn, N, batch_size)
         plt.show()
     else:
-        rnn = RNN.load("3bit_fully_trained.pt", input_size=3, output_size=3)
+        rnn = RNN.load("dale_ratio.pt", input_size=3, output_size=3)
 
     # ------------------------------- Activity PCA ------------------------------- #
     X, Y = make_batch(N)
