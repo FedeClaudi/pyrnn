@@ -80,7 +80,7 @@ class FixedPointsConnectivity(object):
         for start_fp, ic in track(
             initial_conditions, description=f"[{orange}]getting connectivity"
         ):
-            h = ic
+            h = ic.reshape(1, 1, -1)
             trajectory = []
 
             for epoch in range(max_iters):

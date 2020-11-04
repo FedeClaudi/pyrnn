@@ -18,10 +18,10 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 # ----------------------------------- setup ---------------------------------- #
 EXTRACT = True
-RENDER = True
+RENDER = False
 
-N = 2048  # 512
-batch_size = 128  # 32
+N = 2048 if EXTRACT else 512
+batch_size = 128 if EXTRACT else 32
 
 
 rnn = RNN.load("dale_ratio.pt", input_size=3, output_size=3)
@@ -44,15 +44,15 @@ constant_inputs = [
 if EXTRACT:
     fp_finder = FixedPoints(
         rnn,
-        speed_tol=3e-03,
-        noise_scale=1.5,
+        speed_tol=2e-03,
+        noise_scale=1.75,
     )
 
     fp_finder.find_fixed_points(
         h,
         constant_inputs,
         n_initial_conditions=256,
-        max_iters=5000,
+        max_iters=6000,
         lr_decay_epoch=1500,
         max_fixed_points=27,
     )
@@ -62,20 +62,22 @@ if EXTRACT:
 # ----------------------------------- Plot ----------------------------------- #
 fps = FixedPoints.load_fixed_points("fps_dale.json")
 if RENDER:
-    plot_fixed_points(h, fps, alpha=0.005)
+    plot_fixed_points(h, fps, alpha=0.005, scale=1, sequential=False)
 
 # ----------------------------- fps connectivity ----------------------------- #
 fps_connectivity = FixedPointsConnectivity(
     rnn,
     fps,
-    n_initial_conditions=12000,
-    noise_scale=0.2,
+    n_initial_conditions=2048,
+    noise_scale=0.1,
 )
 outcomes, graph = fps_connectivity.get_connectivity(
     constant_inputs[0], max_iters=1024
 )
 
 if RENDER:
-    plot_fixed_points_connectivity_analysis(h, fps, outcomes, alpha=0.005)
+    plot_fixed_points_connectivity_analysis(
+        h, fps, outcomes, alpha=0.005, sequential=True
+    )
 
     plot_fixed_points_connectivity_graph(h, fps, graph, alpha=0.005)

@@ -77,7 +77,7 @@ def get_fp_color(n, col_set=1):
     elif n == 1:
         color = "salmon" if col_set == 1 else "lightsalmon"
     elif n == 2:
-        color = "skyblue" if col_set == 1 else "powderblue"
+        color = "skyblue" if col_set == 1 else "deepskyblue"
     else:
         color = "magenta" if col_set == 1 else "purple"
 
@@ -114,6 +114,7 @@ def plot_fixed_points(
     scale=0.5,
     _show=True,
     fpoint_radius=0.05,
+    sequential=False,
     **kwargs,
 ):
     hidden_history = flatten_h(hidden_history)
@@ -124,29 +125,41 @@ def plot_fixed_points(
 
     t = pca.transform
 
-    for fp in fixed_points:
-        pos = t(fp.h.reshape(1, -1))[0, :]
+    _vis_actors = actors.copy()
+    for n in (0, 1, 2, 3):
+        vis_actors = _vis_actors.copy()
 
-        color = get_fp_color(fp.n_unstable_modes)
-        # plot unstable directions
-        for stable, eigval, eigvec in fp.eigenmodes:
-            if not stable:
-                delta = eigval * -eigvec * scale
-                p0 = pos - t(np.real(delta).reshape(1, -1))
-                p1 = pos + t(np.real(delta).reshape(1, -1))
+        for fp in fixed_points:
+            pos = t(fp.h.reshape(1, -1))[0, :]
 
-                actors.append(
-                    Tube(
-                        [p1.ravel(), p0.ravel()],
-                        c=color,
-                        r=fpoint_radius,
-                        alpha=1,
+            n_unstable = fp.n_unstable_modes
+            if n_unstable != n and sequential:
+                continue
+
+            color = get_fp_color(n_unstable)
+            # plot unstable directions
+            for stable, eigval, eigvec in fp.eigenmodes:
+                if not stable:
+                    delta = eigval * -eigvec * scale
+                    p0 = pos - t(np.real(delta).reshape(1, -1))
+                    p1 = pos + t(np.real(delta).reshape(1, -1))
+
+                    vis_actors.append(
+                        Tube(
+                            [p1.ravel(), p0.ravel()],
+                            c=color,
+                            r=fpoint_radius,
+                            alpha=1,
+                        )
                     )
-                )
 
-        actors.append(Sphere(pos, c=color, r=0.1))
+            vis_actors.append(Sphere(pos, c=color, r=0.1))
 
-    render(actors, _show=_show)
+        render(vis_actors, _show=_show)
+        actors.extend(vis_actors)
+        if not sequential:
+            break
+
     return pca, actors
 
 
@@ -158,6 +171,7 @@ def plot_fixed_points_connectivity_analysis(
     _show=True,
     traj_radius=0.01,
     initial_conditions_radius=0.05,
+    sequential=False,
     **kwargs,
 ):
     hidden_history = flatten_h(hidden_history)
@@ -169,17 +183,32 @@ def plot_fixed_points_connectivity_analysis(
     def t(arr):
         return pca.transform(prepend_dim(arr)).ravel()
 
-    for start_fp, end_fp, trajectory in fps_connectivity:
-        # Color based on the number of unstable modes
-        color = get_fp_color(start_fp.n_unstable_modes, col_set=2)
+    _vis_actors = actors.copy()
+    for n in (0, 1, 2, 3):
+        vis_actors = _vis_actors.copy()
 
-        trajectory = [t(tp) for tp in trajectory]
-        actors.append(Tube(trajectory, c=color, r=traj_radius, alpha=1))
-        actors.append(
-            Sphere(trajectory[0], r=initial_conditions_radius, c=color)
-        )
+        for start_fp, end_fp, trajectory in fps_connectivity:
+            n_unstable = start_fp.n_unstable_modes
+            if n_unstable != n and sequential:
+                continue
 
-    render(actors, _show=_show)
+            # Color based on the number of unstable modes
+            color = get_fp_color(n_unstable, col_set=2)
+
+            trajectory = [t(tp) for tp in trajectory]
+            vis_actors.append(
+                Tube(trajectory, c=color, r=traj_radius, alpha=1)
+            )
+            vis_actors.append(
+                Sphere(trajectory[0], r=initial_conditions_radius, c=color)
+            )
+
+        render(vis_actors, _show=_show)
+        actors.extend(vis_actors)
+
+        if not sequential:
+            break
+
     return pca, actors
 
 
