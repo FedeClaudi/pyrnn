@@ -17,8 +17,8 @@ from pyrnn.plot import (
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 # ----------------------------------- setup ---------------------------------- #
-EXTRACT = True
-RENDER = False
+EXTRACT = False
+RENDER = True
 
 N = 2048 if EXTRACT else 512
 batch_size = 128 if EXTRACT else 32
