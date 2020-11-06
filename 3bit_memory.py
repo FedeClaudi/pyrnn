@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import os
 
-from pyrnn import RNN, plot_training_loss, plot_state_history_pca_3d
+from pyrnn import CustomRNN, plot_training_loss, plot_state_history_pca_3d
 from pyrnn.tasks.three_bit_memory import (
     ThreeBitDataset,
     plot_predictions,
@@ -13,36 +13,45 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 # ---------------------------------- Params ---------------------------------- #
 FIT = True
 
-N = 1024
-batch_size = 256
-epochs = 10  # 450
-lr = 0.005
-
+n_units = 256
+N = 2048 if FIT else 5000
+batch_size = 128
+epochs = 1024
+lr_milestones = [100, 500, 800]
+lr = 0.001
 
 # ------------------------------- Fit/load RNN ------------------------------- #
-if __name__ == "__main__":
-    if FIT:
-        dataset = ThreeBitDataset(N, dataset_length=8)
+if FIT:
+    dataset = ThreeBitDataset(N, dataset_length=1)
 
-        rnn = RNN(input_size=3, output_size=3, autopses=False, dale_ratio=0.8)
-        loss_history = rnn.fit(
-            dataset,
-            N,
-            n_epochs=epochs,
-            lr=lr,
-            batch_size=batch_size,
-            input_length=N,
-        )
-        plot_training_loss(loss_history)
-        rnn.save("dale_ratio.pt")
+    rnn = CustomRNN(
+        input_size=3,
+        output_size=3,
+        autopses=True,
+        dale_ratio=None,
+        n_units=n_units,
+    )
 
-        plot_predictions(rnn, N, batch_size)
-        plt.show()
-    else:
-        rnn = RNN.load("dale_ratio.pt", input_size=3, output_size=3)
+    loss_history = rnn.fit(
+        dataset,
+        N,
+        n_epochs=epochs,
+        lr=lr,
+        batch_size=batch_size,
+        input_length=N,
+        lr_milestones=lr_milestones,
+        l2norm=0,
+    )
+    rnn.save("rnn.pt")
 
-    # ------------------------------- Activity PCA ------------------------------- #
-    X, Y = make_batch(N)
-    o, h = rnn.predict_with_history(X)
+    plot_predictions(rnn, N, batch_size)
+    plot_training_loss(loss_history)
+    plt.show()
+else:
+    rnn = CustomRNN.load("rnn.pt", input_size=3, output_size=3)
 
-    plot_state_history_pca_3d(h, alpha=0.01)
+# ------------------------------- Activity PCA ------------------------------- #
+X, Y = make_batch(N)
+o, h = rnn.predict_with_history(X)
+
+plot_state_history_pca_3d(h, alpha=0.01)

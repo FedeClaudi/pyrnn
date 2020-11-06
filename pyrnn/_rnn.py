@@ -63,7 +63,6 @@ class RNNBase(nn.Module):
         input_size=1,
         output_size=1,
         n_units=50,
-        free_output_weights=False,
         dale_ratio=None,
         autopses=True,
         connectivity=None,
@@ -148,7 +147,7 @@ class RNNBase(nn.Module):
         lr_milestones=None,
         gamma=0.1,
         input_length=100,
-        l2norm=0.0001,
+        l2norm=0,
         stop_loss=None,
         **kwargs,
     ):

@@ -10,7 +10,7 @@ def flatten_h(h):
         return h.reshape(-1, h.shape[-1])
 
 
-def torchify(arr, flatten=True):
+def torchify(arr, flatten=False):
     tensor = torch.from_numpy(arr.astype(np.float32))
 
     if flatten:
@@ -18,7 +18,7 @@ def torchify(arr, flatten=True):
     return tensor
 
 
-def npify(tensor, flatten=True):
+def npify(tensor, flatten=False):
     if not isinstance(tensor, np.ndarray):
         tensor = tensor.detach().numpy()
 
