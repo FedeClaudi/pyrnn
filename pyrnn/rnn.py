@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from rich import print
-from pyinspect._colors import mocassin, orange
+from myterial import amber_light, orange
 import numpy as np
 from rich.progress import track
 import sys
@@ -122,20 +122,21 @@ class RNN(nn.Module):
     def save(self, path):
         if not path.endswith(".pt"):
             raise ValueError("Expected a path point to a .pt file")
-        print(f"[{mocassin}]Saving model at: [{orange}]{path}")
+        print(f"[{amber_light}]Saving model at: [{orange}]{path}")
         torch.save(self.state_dict(), path)
 
     @classmethod
     def load(cls, path, *args, **kwargs):
         if not path.endswith(".pt"):
             raise ValueError("Expected a path point to a .pt file")
-        print(f"[{mocassin}]Loading model from: [{orange}]{path}")
+
+        print(f"[{amber_light}]Loading model from: [{orange}]{path}")
         model = cls(*args, **kwargs)
         model.load_state_dict(torch.load(path))
         model.eval()
         return model
 
-    def _initialize_hidden(self, x):
+    def _initialize_hidden(self, x, *args):
         return torch.zeros((1, x.shape[0], self.n_units))
 
     def forward(self, x, h=None):
@@ -153,9 +154,14 @@ class RNN(nn.Module):
         batch_size=64,
         n_epochs=100,
         lr=0.001,
+        lr_milestones=None,
+        gamma=0.1,
         input_length=100,
+        l2norm=0.0001,
+        stop_loss=None,
         **kwargs,
     ):
+        stop_loss = stop_loss or -1
 
         train_dataloader = torch.utils.data.DataLoader(
             dataset,
@@ -165,7 +171,18 @@ class RNN(nn.Module):
             worker_init_fn=lambda x: np.random.seed(),
         )
 
-        optimizer = torch.optim.Adam(self.parameters(), lr=lr)
+        # Get optimizer
+        optimizer = torch.optim.Adam(
+            self.parameters(), lr=lr, weight_decay=l2norm, amsgrad=True
+        )
+
+        # Set up leraning rate scheudler
+        lr_milestones = lr_milestones or [100000000]
+        scheduler = torch.optim.lr_scheduler.MultiStepLR(
+            optimizer, milestones=lr_milestones, gamma=gamma
+        )
+
+        # Set up training loss
         criterion = torch.nn.MSELoss()
 
         losses = []
@@ -185,6 +202,7 @@ class RNN(nn.Module):
                 for batchn, batch in enumerate(train_dataloader):
                     # initialise
                     X, Y = batch
+                    self._labels = Y
 
                     # zero gradient
                     optimizer.zero_grad()
@@ -195,32 +213,40 @@ class RNN(nn.Module):
                     # backprop + optimizer
                     loss = criterion(output, Y)
                     loss.backward(retain_graph=True)
+
                     optimizer.step()
+                    scheduler.step()
+
+                    # get current lr
+                    lr = scheduler.get_last_lr()[-1]
 
                     batch_loss += loss.item()
 
                 train_progress.update(
                     tid,
                     completed=epoch,
-                    loss=batch_loss / batch_size,
+                    loss=batch_loss,
                     lr=lr,
                 )
-                losses.append(batch_loss / batch_size)
+                losses.append(batch_loss)
+
+                if batch_loss <= stop_loss:
+                    break
         return losses
 
     def predict_with_history(self, X):
-        print(f"[{mocassin}]Predicting input step by step")
+        print(f"[{amber_light}]Predicting input step by step")
         seq_len = X.shape[1]
         n_trials = X.shape[0]
 
         hidden_trace = np.zeros((n_trials, seq_len, self.n_units))
         output_trace = np.zeros((n_trials, seq_len, self.output_size))
 
-        for trialn in track(
-            range(n_trials), description=f"[{orange}]predicting..."
-        ):
+        for trialn in range(n_trials):
             h = None
-            for step in range(seq_len):
+            for step in track(
+                range(seq_len), description=f"trial {trialn}/{n_trials}"
+            ):
                 o, h = self(X[trialn, step, :].reshape(1, 1, -1), h)
                 hidden_trace[trialn, step, :] = h.detach().numpy()
                 output_trace[trialn, step, :] = o.detach().numpy()

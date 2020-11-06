@@ -2,7 +2,7 @@ from scipy.spatial.distance import euclidean
 import numpy as np
 from rich import print
 from rich.progress import track
-from pyinspect._colors import mocassin, orange
+from myterial import amber_light, orange
 
 import networkx as nx
 
@@ -69,8 +69,8 @@ class FixedPointsConnectivity(object):
 
     def get_connectivity(self, const_input, max_iters=500):
         print(
-            f"[{mocassin}]Extracting fixed points connectivity (",
-            f"[{orange}]{self.n_initial_conditions}[/{orange}][{mocassin}] points)",
+            f"[{amber_light}]Extracting fixed points connectivity (",
+            f"[{orange}]{self.n_initial_conditions}[/{orange}][{amber_light}] points)",
         )
 
         initial_conditions, inits_per_fp = self._get_initial_conditions()
@@ -96,7 +96,7 @@ class FixedPointsConnectivity(object):
                     break
 
         print(
-            f"[{orange}]{len(outcomes)}[/{orange}][{mocassin}] initial conditions converged"
+            f"[{orange}]{len(outcomes)}[/{orange}][{amber_light}] initial conditions converged"
         )
         self.outcomes = outcomes
 

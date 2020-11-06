@@ -2,7 +2,7 @@ import numpy as np
 from numpy import random as rnd
 import matplotlib.pyplot as plt
 import torch
-from pyinspect._colors import salmon, dimgreen, lilla
+from myterial import salmon, light_green_dark, indigo_light
 from pyrnn._plot import clean_axes
 import torch.utils.data as data
 import sys
@@ -10,13 +10,13 @@ import sys
 """
     3 bit memory task
         input is a 3xN tensor with (0, 1, -1) values
-        output is a 3xd tensor with (1, -1) values
+        output is a 3xN tensor with (1, -1) values
 
     each input corresponds to noe output, the output
     is a `memory` of which state the input is in (1, -1)
 """
 
-is_win = sys.platform == 'win32'
+is_win = sys.platform == "win32"
 
 
 class ThreeBitDataset(data.Dataset):
@@ -90,8 +90,14 @@ def plot_predictions(model, seq_len, batch_size):
     f, axarr = plt.subplots(nrows=3, figsize=(12, 9))
     for n, ax in enumerate(axarr):
         ax.plot(X[0, :, n], lw=2, color=salmon, label="input")
-        ax.plot(Y[0, :, n], lw=3, color=lilla, ls="--", label="correct output")
-        ax.plot(o[0, :, n], lw=2, color=dimgreen, label="model output")
+        ax.plot(
+            Y[0, :, n],
+            lw=3,
+            color=indigo_light,
+            ls="--",
+            label="correct output",
+        )
+        ax.plot(o[0, :, n], lw=2, color=light_green_dark, label="model output")
         ax.set(title=f"Input {n}")
         ax.legend()
 

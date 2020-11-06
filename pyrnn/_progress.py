@@ -4,7 +4,7 @@ from rich.progress import (
     TimeRemainingColumn,
     TextColumn,
 )
-from pyinspect._colors import orange, mocassin
+from myterial import orange, amber_light
 
 
 class SpeedColumn(TextColumn):
@@ -28,9 +28,7 @@ class LossColumn(TextColumn):
 
     def render(self, task):
         try:
-            return (
-                f"[{mocassin}]loss: [bold {orange}]{task.fields['loss']:.6f}"
-            )
+            return f"[{amber_light}]loss: [bold {orange}]{task.fields['loss']:.6f}"
         except AttributeError:
             return "no loss"
 
@@ -43,7 +41,7 @@ class LearningRateColumn(TextColumn):
 
     def render(self, task):
         try:
-            return f"[{mocassin}]lr: [bold {orange}]{task.fields['lr']:.6f}"
+            return f"[{amber_light}]lr: [bold {orange}]{task.fields['lr']:.6f}"
         except AttributeError:
             return "no lr"
 
@@ -56,9 +54,9 @@ class FPSpeedColumn(TextColumn):
 
     def render(self, task):
         if task.fields["fpspeed"] is not None:
-            return f"[{mocassin}]fp speed: [bold {orange}]{task.fields['fpspeed']:.6e}"
+            return f"[{amber_light}]fp speed: [bold {orange}]{task.fields['fpspeed']:.6e}"
         else:
-            return ''
+            return ""
 
 
 train_progress = Progress(

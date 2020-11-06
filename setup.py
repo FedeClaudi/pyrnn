@@ -13,6 +13,7 @@ requirements = [
     "pytorch",
     "numpy",
     "networkx",
+    "myterial",
 ]
 
 setup(

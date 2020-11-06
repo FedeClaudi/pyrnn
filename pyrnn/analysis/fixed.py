@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from rich import print
-from pyinspect._colors import mocassin, orange
+from myterial import amber_light, orange
 from scipy.spatial.distance import euclidean
 from collections import namedtuple
 
@@ -183,7 +183,7 @@ class FixedPoints(object):
         # Flatten hidden
         hidden = flatten_h(hidden)
 
-        print(f"[{mocassin}]Looking for fixed points.")
+        print(f"[{amber_light}]Looking for fixed points.")
         initial_conditions = self._get_initial_conditions(
             hidden, n_initial_conditions
         )
@@ -207,7 +207,7 @@ class FixedPoints(object):
 
                 # Add a second progress bar for each initial conditon
                 tid = progress.add_task(
-                    f"[{mocassin}] Init.cond.: {nhid}/{n_initial_conditions} | ({len(fixed_points)}/{max_fixed_points})",
+                    f"[{amber_light}] Init.cond.: {nhid}/{n_initial_conditions} | ({len(fixed_points)}/{max_fixed_points})",
                     start=True,
                     total=max_iters * len(constant_inputs),
                     fpspeed=None,
@@ -229,7 +229,7 @@ class FixedPoints(object):
                     break
 
         print(
-            f"[{mocassin}]Found [{orange}]{len(fixed_points)}[/{orange}] from [{orange}]{n_initial_conditions}[/{orange}] initial conditions"
+            f"[{amber_light}]Found [{orange}]{len(fixed_points)}[/{orange}] from [{orange}]{n_initial_conditions}[/{orange}] initial conditions"
         )
         if fixed_points:
             self.fixed_points = [
@@ -246,6 +246,8 @@ class FixedPoints(object):
 
     @staticmethod
     def load_fixed_points(filepath):
-        print(f"[{mocassin}]Loading fixed points from: [{orange}]{filepath}")
+        print(
+            f"[{amber_light}]Loading fixed points from: [{orange}]{filepath}"
+        )
         data = load_json(filepath)
         return [FixedPoint.from_dict(n, d) for n, d in enumerate(data)]

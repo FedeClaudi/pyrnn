@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from pyinspect._colors import salmon
+from myterial import salmon
 import numpy as np
 from vedo import Lines, show, Spheres, Sphere, Tube
 from sklearn.decomposition import PCA
@@ -9,6 +9,13 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from ._plot import clean_axes, points_from_pc
 from ._utils import prepend_dim, npify, flatten_h
+
+from vedo import settings
+
+settings.useDepthPeeling = (
+    True  # necessary for rendering of semitransparent actors
+)
+settings.useFXAA = True  # necessary for rendering of semitransparent actors
 
 
 # -------------------------------- matplotlib -------------------------------- #
@@ -85,7 +92,14 @@ def get_fp_color(n, col_set=1):
 
 
 def plot_state_history_pca_3d(
-    hidden_history, lw=20, alpha=0.1, color="k", pts=None, _show=True
+    hidden_history,
+    lw=20,
+    alpha=0.1,
+    color="k",
+    pts=None,
+    _show=True,
+    actors=None,
+    mark_start=False,
 ):
     """
     Fits a PCA to high dim hidden state history
@@ -98,7 +112,11 @@ def plot_state_history_pca_3d(
     pc = pca.transform(hidden_history)
     points = points_from_pc(pc)
 
-    actors = [Lines(points).lw(lw).alpha(alpha).c(color)]
+    actors = actors or []
+    actors.append(Lines(points).lw(lw).alpha(alpha).c(color))
+
+    if mark_start:
+        actors.append(Sphere(points[0][0], r=0.15, c=color))
 
     if pts is not None:
         pts = pca.transform(pts)
