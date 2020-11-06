@@ -11,13 +11,12 @@ from pyrnn.tasks.three_bit_memory import (
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 # ---------------------------------- Params ---------------------------------- #
+FIT = True
 
 N = 1024
 batch_size = 256
-epochs = 450
+epochs = 10  # 450
 lr = 0.005
-
-FIT = False
 
 
 # ------------------------------- Fit/load RNN ------------------------------- #
