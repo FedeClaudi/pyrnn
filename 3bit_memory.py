@@ -14,10 +14,10 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 N = 1024
 batch_size = 256
-epochs = 350
+epochs = 450
 lr = 0.005
 
-FIT = True
+FIT = False
 
 
 # ------------------------------- Fit/load RNN ------------------------------- #
