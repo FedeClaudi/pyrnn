@@ -242,6 +242,7 @@ class FixedPoints(object):
             return None
 
     def save_fixed_points(self, filepath):
+        print(f"[{amber_light}]Saving fixed points at: [{orange}]{filepath}")
         save_json(filepath, [fp.to_dict() for fp in self.fixed_points])
 
     @staticmethod

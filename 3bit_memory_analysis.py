@@ -2,7 +2,7 @@ import os
 import numpy as np
 import torch
 
-from pyrnn import RNN
+from pyrnn import CustomRNN
 from pyrnn.tasks.three_bit_memory import (
     ThreeBitDataset,
     is_win,
@@ -17,14 +17,15 @@ from pyrnn.plot import (
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 # ----------------------------------- setup ---------------------------------- #
-EXTRACT = False
+EXTRACT = True
+CONNECTIVITY = False
 RENDER = True
 
 N = 2048 if EXTRACT else 512
 batch_size = 128 if EXTRACT else 32
 
 
-rnn = RNN.load("dale_ratio.pt", input_size=3, output_size=3)
+rnn = CustomRNN.load("rnn.pt", n_units=64, input_size=3, output_size=3)
 
 dataloader = torch.utils.data.DataLoader(
     ThreeBitDataset(N, dataset_length=batch_size),
@@ -43,9 +44,7 @@ constant_inputs = [
 # ----------------------------- Find fixed points ---------------------------- #
 if EXTRACT:
     fp_finder = FixedPoints(
-        rnn,
-        speed_tol=2e-03,
-        noise_scale=1.75,
+        rnn, speed_tol=2e-03, noise_scale=1.75, gamma=0.1  # learning rate
     )
 
     fp_finder.find_fixed_points(
@@ -53,31 +52,32 @@ if EXTRACT:
         constant_inputs,
         n_initial_conditions=256,
         max_iters=6000,
-        lr_decay_epoch=1500,
+        lr_decay_epoch=2000,
         max_fixed_points=27,
     )
 
-    fp_finder.save_fixed_points("fps_dale.json")
+    fp_finder.save_fixed_points("rnn.json")
 
 # ----------------------------------- Plot ----------------------------------- #
-fps = FixedPoints.load_fixed_points("fps_dale.json")
+fps = FixedPoints.load_fixed_points("rnn.json")
 if RENDER:
     plot_fixed_points(h, fps, alpha=0.005, scale=1, sequential=False)
 
 # ----------------------------- fps connectivity ----------------------------- #
-fps_connectivity = FixedPointsConnectivity(
-    rnn,
-    fps,
-    n_initial_conditions=2048,
-    noise_scale=0.1,
-)
-outcomes, graph = fps_connectivity.get_connectivity(
-    constant_inputs[0], max_iters=1024
-)
-
-if RENDER:
-    plot_fixed_points_connectivity_analysis(
-        h, fps, outcomes, alpha=0.005, sequential=True
+if CONNECTIVITY:
+    fps_connectivity = FixedPointsConnectivity(
+        rnn,
+        fps,
+        n_initial_conditions=2048,
+        noise_scale=0.1,
+    )
+    outcomes, graph = fps_connectivity.get_connectivity(
+        constant_inputs[0], max_iters=1024
     )
 
-    plot_fixed_points_connectivity_graph(h, fps, graph, alpha=0.005)
+    if RENDER:
+        plot_fixed_points_connectivity_analysis(
+            h, fps, outcomes, alpha=0.005, sequential=True
+        )
+
+        plot_fixed_points_connectivity_graph(h, fps, graph, alpha=0.005)

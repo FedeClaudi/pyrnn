@@ -1,10 +1,12 @@
 import torch
 import torch.nn as nn
 from rich import print
-from myterial import amber_light, orange
+from rich.table import Table
+from myterial import amber_light, orange, salmon
 import numpy as np
 from rich.progress import track
 import sys
+import pyinspect as pi
 
 from ._progress import train_progress
 from ._utils import npify
@@ -14,6 +16,11 @@ is_win = sys.platform == "win32"
 
 
 class RecurrentWeightsInitializer(object):
+    """
+    This class implements biological constraints
+    on the recurrent weights of a RNN subclassing RNNBase
+    """
+
     def __init__(
         self,
         initial_weights,
@@ -21,6 +28,21 @@ class RecurrentWeightsInitializer(object):
         autopses=True,
         connectivity=None,
     ):
+        """
+        This class implements biological constraints
+        on the recurrent weights of a RNN subclassing RNNBase.
+        Updated weights can be accessed at RecurrentWeightsInitializer.weights.
+
+        Arguments:
+            initial_weights (np.ndarray): (n_units * n_units) np.array
+                with recurrent weights initialized by pythorch.
+            dale_ratio (float): of not None should be a float in range (0, 1)
+                specifying which proportion of units should be excitatory
+            autopses (bool): if False autopses are removed from weights
+                (diagonal elements on weights matrix)
+            connectivity (): not yet implemented: will be used to contraint
+                connectivity among unnits
+        """
         self.weights = initial_weights
         self.connectivity = np.ones_like(self.weights)
 
@@ -34,10 +56,21 @@ class RecurrentWeightsInitializer(object):
             self._remove_autopses()
 
     def _remove_autopses(self):
+        """
+        Removes diagonal elements form weights matrix
+        """
         np.fill_diagonal(self.weights, 0)
         return
 
     def _apply_dale_ratio(self, dale_ratio):
+        """
+        Implements the dale ratio to specify
+        the proportion of excitatory/inhibitory units.
+
+        Arguments:
+            dale_ratio (float): in range (0, 1). Proportion of excitatory
+                units
+        """
         if dale_ratio < 0 or dale_ratio > 1:
             raise ValueError(f"Invalid dale ratio value of: {dale_ratio}")
 
@@ -58,6 +91,15 @@ class RecurrentWeightsInitializer(object):
 
 
 class RNNBase(nn.Module):
+    """
+    Base RNN class, implements method
+    to save/load RNNs, apply constraints on
+    recurrent weights and train/predict with the network.
+    This class if not a functinal RNN by itself, but should
+    be subclasses by RNN classes.
+
+    """
+
     def __init__(
         self,
         input_size=1,
@@ -67,7 +109,23 @@ class RNNBase(nn.Module):
         autopses=True,
         connectivity=None,
     ):
+        """
+        Base RNN class, implements method
+        to save/load RNNs, apply constraints on
+        recurrent weights and train/predict with the network.
+        This class if not a functinal RNN by itself, but should
+        be subclasses by RNN classes.
 
+        Arguments:
+            input_size (int): number of inputs
+            output_size (int): number of outputs
+            n_units (int): number of units in RNN layer
+            dale_ratio (float): percentage of excitatory units.
+                Use None to ignore
+            autopses (bool): pass False to remove autopses from
+                recurrent weights
+            connectivity (): not implemented yet
+        """
         super(RNNBase, self).__init__()
 
         self.n_units = n_units
@@ -78,38 +136,8 @@ class RNNBase(nn.Module):
         self.autopses = autopses
         self.connectivity = connectivity
 
+        # recurrent weights are not definite yet
         self._is_built = False
-
-    def get_recurrent_weights(self, *args, **kwargs):
-        raise NotImplementedError(
-            "Whem specifying a RNN class you need to define `get_recurrent_weights`"
-        )
-
-    def set_recurrent_weights(self, weights):
-        raise NotImplementedError(
-            "Whem specifying a RNN class you need to define `set_recurrent_weights`"
-        )
-
-    def forward(self, *args):
-        raise NotImplementedError(
-            "Whem specifying a RNN class you need to define `forward`"
-        )
-
-    def build(self):
-        # Update recurrent weights matrix
-        iw = npify(self.get_recurrent_weights(), flatten=False)
-        initializer = RecurrentWeightsInitializer(
-            iw,
-            dale_ratio=self.dale_ratio,
-            autopses=self.autopses,
-            connectivity=self.connectivity,
-        )
-        self.set_recurrent_weights(initializer.weights)
-        # self.rnn_layer.weight_hh_l0 = nn.Parameter(
-        #     torchify(initializer.weights, flatten=False)
-        # )
-
-        self._is_built = True
 
     def _show(self):
         print(self)
@@ -117,7 +145,52 @@ class RNNBase(nn.Module):
     def __str__(self):
         self._show()
 
+    def get_recurrent_weights(self, *args, **kwargs):
+        """
+        Get weights of recurrent layer
+        """
+        raise NotImplementedError(
+            "Whem specifying a RNN class you need to define `get_recurrent_weights`"
+        )
+
+    def set_recurrent_weights(self, weights):
+        """
+        Set weights of recurrent layer
+
+        Arguments:
+            weights (np.ndarray): (n_units * n_units) 2d array with recurrent weights
+        """
+        raise NotImplementedError(
+            "Whem specifying a RNN class you need to define `set_recurrent_weights`"
+        )
+
+    def forward(self, *args):
+        """
+        Specifies how the forward dynamics of the network are computed
+        """
+        raise NotImplementedError(
+            "Whem specifying a RNN class you need to define `forward`"
+        )
+
+    def build(self):
+        """
+        Update recurrent weights matrix with biological constraints
+        """
+        iw = npify(self.get_recurrent_weights())
+        initializer = RecurrentWeightsInitializer(
+            iw,
+            dale_ratio=self.dale_ratio,
+            autopses=self.autopses,
+            connectivity=self.connectivity,
+        )
+        self.set_recurrent_weights(initializer.weights)
+
+        self._is_built = True
+
     def save(self, path):
+        """
+        Save model to .pt file
+        """
         if not path.endswith(".pt"):
             raise ValueError("Expected a path point to a .pt file")
         print(f"[{amber_light}]Saving model at: [{orange}]{path}")
@@ -125,6 +198,9 @@ class RNNBase(nn.Module):
 
     @classmethod
     def load(cls, path, *args, **kwargs):
+        """
+        Load model from .pt file
+        """
         if not path.endswith(".pt"):
             raise ValueError("Expected a path point to a .pt file")
 
@@ -135,27 +211,87 @@ class RNNBase(nn.Module):
         return model
 
     def _initialize_hidden(self, x, *args):
+        """
+        Initialize hidden state of the network
+        """
         return torch.zeros((1, x.shape[0], self.n_units))
 
-    def fit(
+    def _fit_report(
         self,
-        dataset,
-        *args,
-        batch_size=64,
-        n_epochs=100,
-        lr=0.001,
-        lr_milestones=None,
-        gamma=0.1,
-        input_length=100,
-        l2norm=0,
-        stop_loss=None,
+        losses,
+        report_path=None,
         **kwargs,
     ):
-        if not self._is_built:
-            raise ValueError("Need to first BUILD the RNN model")
-        stop_loss = stop_loss or -1
+        """
+        Print out a report with training parameters and
+        losses history.
 
-        train_dataloader = torch.utils.data.DataLoader(
+        Arguments:
+            losses (list): list of (epoch, loss)
+            report_path (str, Path): path to .txt file were to save the training report
+            kwargs: keyword arguments specify the training parameters
+        """
+        rep = pi.Report(
+            title="Training report",
+            color=amber_light,
+            accent=salmon,
+            dim=orange,
+        )
+        final = losses[-1]
+        rep.add(
+            f"[{orange}]Final loss: [b]{round(final[-1], 5)}[/b] after [b]{final[0]}[/b] epochs."
+        )
+
+        # Add training params
+        tb = Table(box=None)
+        tb.add_column(style=f"bold {orange}", justify="right")
+        tb.add_column(style=f"{amber_light}", justify="left")
+
+        for param in sorted(kwargs, key=str.lower):
+            tb.add_row(param, str(kwargs[param]))
+        rep.add(tb, "rich")
+        rep.spacer()
+
+        # Add training loss
+        rep.add(f"[bold {salmon}]Training losses")
+        for n, (epoch, loss) in enumerate(losses):
+            if n % 100 == 0 or n == 0:
+                rep.add(f"[bold dim]{epoch}: [/bold dim]{round(loss, 4)}")
+
+        # Save and print
+        if report_path is not None:
+            srep = pi.utils.stringify(rep, maxlen=-1)
+            with open(report_path, "w") as fout:
+                fout.write(srep)
+
+        rep.print()
+
+    def _fit_setup(
+        self, dataset, batch_size, lr, l2norm, lr_milestones, gamma
+    ):
+        """
+        Sets up stuff needed for training, can be replaced by dedicated methods
+        in subclasses e.g. to specify a different optimizer.
+
+        Arguments:
+            dataset (DataSet): instant of torch.utils.data.DataSet subclass
+                with training data
+            batch_size (int): number of trials per batch
+            lr (float): initial learning rate
+            lr_milestones (list): list of epochs numbres at which
+                the learning rate should be decreased
+            gamma (float): factor by which lr should be reduced at each milestone.
+                The updated lr is given by lr * gamma
+            input_length (int): number of samples in the input
+            l2norm (float): l2 recurrent weights normalization
+
+        Returns:
+            loader: dataset loader (torch.utils.data.DataLoader)
+            optimizer: adam optimizer for SGD
+            scheduler: learning rate scheduler to decrease lr during training
+            criterion: function to compute loss at each epoch.
+        """
+        loader = torch.utils.data.DataLoader(
             dataset,
             batch_size=batch_size,
             num_workers=0 if is_win else 2,
@@ -169,13 +305,100 @@ class RNNBase(nn.Module):
         )
 
         # Set up leraning rate scheudler
-        lr_milestones = lr_milestones or [100000000]
         scheduler = torch.optim.lr_scheduler.MultiStepLR(
             optimizer, milestones=lr_milestones, gamma=gamma
         )
 
         # Set up training loss
         criterion = torch.nn.MSELoss()
+
+        return loader, optimizer, scheduler, criterion
+
+    def _fit_run_epoch(self, loader, optimizer, scheduler, criterion):
+        """
+        Runs a single training epoch: iterates over
+        batches, predicts each batch and computes epoch loss
+
+        Arguments:
+            loader: dataset loader
+            optimizer: e.g. Adam
+            scheduler: lr scheduler
+            criterion: function to calculate epoch loss
+
+        Returns:
+            epoch_loss (float): loss for this epoch
+            lr (float): current learning rate
+        """
+        # Loop over batch samples
+        epoch_loss = 0
+        for batchn, batch in enumerate(loader):
+            # initialise
+            X, Y = batch
+            self._labels = Y
+
+            # zero gradient
+            optimizer.zero_grad()
+
+            # predict
+            output, h = self(X)
+
+            # backprop + optimizer
+            loss = criterion(output, Y)
+            loss.backward(retain_graph=True)
+
+            optimizer.step()
+            scheduler.step()
+
+            # get current lr
+            lr = scheduler.get_last_lr()[-1]
+
+            # update loss
+            epoch_loss += loss.item()
+        return epoch_loss, lr
+
+    def fit(
+        self,
+        dataset,
+        *args,
+        batch_size=64,
+        n_epochs=100,
+        lr=0.001,
+        lr_milestones=None,
+        gamma=0.1,
+        input_length=100,
+        l2norm=0,
+        stop_loss=None,
+        report_path=None,
+        **kwargs,
+    ):
+        """
+        Trains a RNN to predict the data in a dataset.
+
+        Argument:
+            dataset (DataSet): instant of torch.utils.data.DataSet subclass
+                with training data
+            batch_size (int): number of trials per batch
+            n_epochs (int): number of training epochs
+            lr (float): initial learning rate
+            lr_milestones (list): list of epochs numbres at which
+                the learning rate should be decreased
+            gamma (float): factor by which lr should be reduced at each milestone.
+                The updated lr is given by lr * gamma
+            input_length (int): number of samples in the input
+            l2norm (float): l2 recurrent weights normalization
+            stop_loss (float): if not None, when loss <= stop_loss training is stopped
+            report_path (str, Path): path to a .txt file where the training report
+                will be saved.
+        """
+        stop_loss = stop_loss or -1
+        lr_milestones = lr_milestones or [100000000]
+
+        if not self._is_built:
+            raise ValueError("Need to first BUILD the RNN model")
+
+        operators = self._fit_setup(
+            dataset, batch_size, lr, l2norm, lr_milestones, gamma
+        )
 
         losses = []
         with train_progress as progress:
@@ -189,44 +412,50 @@ class RNNBase(nn.Module):
 
             # loop over epochs
             for epoch in range(n_epochs + 1):
-                # Loop over batch samples
-                batch_loss = 0
-                for batchn, batch in enumerate(train_dataloader):
-                    # initialise
-                    X, Y = batch
-                    self._labels = Y
-
-                    # zero gradient
-                    optimizer.zero_grad()
-
-                    # predict
-                    output, h = self(X)
-
-                    # backprop + optimizer
-                    loss = criterion(output, Y)
-                    loss.backward(retain_graph=True)
-
-                    optimizer.step()
-                    scheduler.step()
-
-                    # get current lr
-                    lr = scheduler.get_last_lr()[-1]
-
-                    batch_loss += loss.item()
+                epoch_loss, lr = self._fit_run_epoch(*operators)
 
                 train_progress.update(
                     tid,
                     completed=epoch,
-                    loss=batch_loss,
+                    loss=epoch_loss,
                     lr=lr,
                 )
-                losses.append(batch_loss)
+                losses.append((epoch, epoch_loss))
 
-                if batch_loss <= stop_loss:
+                if epoch_loss <= stop_loss:
                     break
-        return losses
+
+        # Make report about training process
+        self._fit_report(
+            losses,
+            batch_size=batch_size,
+            n_epochs=n_epochs,
+            lr=lr,
+            lr_milestones=lr_milestones,
+            gamma=gamma,
+            input_length=input_length,
+            l2norm=l2norm,
+            stop_loss=stop_loss,
+            report_path=report_path,
+        )
+        return [l[1] for l in losses]
 
     def predict_with_history(self, X):
+        """
+        Predicts a batch of data and keeps
+        track of the input and hiddent state at each
+        sample along the batch.
+
+        Arguments:
+            X (np.ndarray): (batch_size, n_samples, n_inputs) 3d numpy array
+                with inputs to use for prediction.
+
+        Returns:
+            output_trace (np.ndarray): (n_trials, n_samples, n_outpus) 3d numpy array
+                with network's output at each sample
+            hidden_trace (np.ndarray): (n_trials, n_samples, n_units) 3d numpy array
+                with network's hidden state at each sample
+        """
         print(f"[{amber_light}]Predicting input step by step")
         seq_len = X.shape[1]
         n_trials = X.shape[0]
@@ -234,11 +463,11 @@ class RNNBase(nn.Module):
         hidden_trace = np.zeros((n_trials, seq_len, self.n_units))
         output_trace = np.zeros((n_trials, seq_len, self.output_size))
 
-        for trialn in range(n_trials):
+        for trialn in track(
+            range(n_trials), description=f"predicting {n_trials} trials"
+        ):
             h = None
-            for step in track(
-                range(seq_len), description=f"trial {trialn}/{n_trials}"
-            ):
+            for step in range(seq_len):
                 o, h = self(X[trialn, step, :].reshape(1, 1, -1), h)
                 hidden_trace[trialn, step, :] = h.detach().numpy()
                 output_trace[trialn, step, :] = o.detach().numpy()
@@ -246,6 +475,17 @@ class RNNBase(nn.Module):
         return output_trace, hidden_trace
 
     def predict(self, X):
+        """
+        Predicts a single trial from a given input.
+
+        Arguments:
+            X (np.ndarray): (batch_size, n_samples, n_inputs) 3d numpy array
+                with inputs to use for prediction.
+
+        Returns:
+            o (np.ndarray): network's output
+            h (np.ndarray): network's hidden state
+        """
         o, h = self(X[0, :, :].unsqueeze(0))
         o = o.detach().numpy()
         h = h.detach().numpy()

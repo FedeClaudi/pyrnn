@@ -89,12 +89,12 @@ class CustomRNN(RNNBase):
         self.w_out = nn.Linear(n_units, output_size, bias=False)
 
         # Initialize weights
-        self.w_in.weight = nn.init.uniform_(self.w_in.weight, -0.25, 0.25)
+        # self.w_in.weight = nn.init.uniform_(self.w_in.weight, -0.1, 0.1)
 
         # freeze parameters
-        # for layer in (self.w_in, self.w_out):
-        #     for p in layer.parameters():
-        #         p.requires_grad = False
+        for layer in (self.w_in, self.w_out):
+            for p in layer.parameters():
+                p.requires_grad = False
 
         self.activation = nn.Tanh()
 
@@ -115,9 +115,8 @@ class CustomRNN(RNNBase):
         nbatch, length, ninp = x.shape
         out = torch.zeros(length, nbatch, ninp)
         for t in range(length):
-            h_dot = -h + self.w_rec(self.activation(h)) + self.w_in(x[:, t, :])
-            h += h_dot
+            h = self.activation(self.w_rec(h) + self.w_in(x[:, t, :]))
 
-            out[t, :, :] = self.w_out(self.activation(h))
+            out[t, :, :] = self.w_out(h)
 
         return out.permute(1, 0, 2), h

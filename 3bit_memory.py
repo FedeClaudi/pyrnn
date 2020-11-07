@@ -14,15 +14,15 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 FIT = True
 
 n_units = 256
-N = 2048 if FIT else 5000
+N = 2048 if FIT else 15000
 batch_size = 128
-epochs = 1024
+epochs = 1
 lr_milestones = [100, 500, 800]
 lr = 0.001
 
 # ------------------------------- Fit/load RNN ------------------------------- #
 if FIT:
-    dataset = ThreeBitDataset(N, dataset_length=1)
+    dataset = ThreeBitDataset(N, dataset_length=8)
 
     rnn = CustomRNN(
         input_size=3,
@@ -41,14 +41,17 @@ if FIT:
         input_length=N,
         lr_milestones=lr_milestones,
         l2norm=0,
+        report_path="3bit_memory.txt",
     )
-    rnn.save("rnn.pt")
+    rnn.save("3bit_memory.pt")
 
     plot_predictions(rnn, N, batch_size)
     plot_training_loss(loss_history)
     plt.show()
 else:
-    rnn = CustomRNN.load("rnn.pt", input_size=3, output_size=3)
+    rnn = CustomRNN.load(
+        "3bit_memory.pt", n_units=n_units, input_size=3, output_size=3
+    )
 
 # ------------------------------- Activity PCA ------------------------------- #
 X, Y = make_batch(N)

@@ -2,6 +2,7 @@
 *.npy
 *.pt
 *.json
+*.txt
 
 workspace.py
 # Byte-compiled / optimized / DLL files
