@@ -4,11 +4,10 @@ from rich import print
 from rich.table import Table
 from myterial import amber_light, orange, salmon
 import numpy as np
-from rich.progress import track
 import sys
 import pyinspect as pi
 
-from ._progress import train_progress
+from ._progress import train_progress, base_progress
 from ._utils import npify
 
 
@@ -463,14 +462,37 @@ class RNNBase(nn.Module):
         hidden_trace = np.zeros((n_trials, seq_len, self.n_units))
         output_trace = np.zeros((n_trials, seq_len, self.output_size))
 
-        for trialn in track(
-            range(n_trials), description=f"predicting {n_trials} trials"
-        ):
-            h = None
-            for step in range(seq_len):
-                o, h = self(X[trialn, step, :].reshape(1, 1, -1), h)
-                hidden_trace[trialn, step, :] = h.detach().numpy()
-                output_trace[trialn, step, :] = o.detach().numpy()
+        with base_progress as progress:
+            main_id = progress.add_task(
+                f"predicting {n_trials} trials",
+                start=True,
+                total=n_trials,
+            )
+
+            # loop over trials in batch
+            for trialn in range(n_trials):
+                # Progress bar stuff
+                trial_id = progress.add_task(
+                    f"Trial {trialn}",
+                    start=True,
+                    total=seq_len,
+                )
+                progress.update(
+                    main_id,
+                    completed=trialn,
+                )
+
+                # Loop over samples in trial
+                h = None
+                for step in range(seq_len):
+                    progress.update(
+                        trial_id,
+                        completed=step,
+                    )
+                    o, h = self(X[trialn, step, :].reshape(1, 1, -1), h)
+                    hidden_trace[trialn, step, :] = h.detach().numpy()
+                    output_trace[trialn, step, :] = o.detach().numpy()
+                progress.remove_task(trial_id)
 
         return output_trace, hidden_trace
 

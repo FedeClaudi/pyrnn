@@ -1,10 +1,43 @@
 from rich.progress import (
     Progress,
     BarColumn,
-    TimeRemainingColumn,
     TextColumn,
+    ProgressColumn,
 )
-from myterial import orange, amber_light
+from datetime import timedelta
+
+from rich.text import Text
+from myterial import orange, amber_light, teal_light, light_blue_light
+
+
+class TimeRemainingColumn(ProgressColumn):
+    """Renders estimated time remaining."""
+
+    # Only refresh twice a second to prevent jitter
+    max_refresh = 0.5
+
+    def render(self, task):
+        """Show time remaining."""
+        remaining = task.time_remaining
+        if remaining is None:
+            return Text("-:--:--", style=teal_light)
+        remaining_delta = timedelta(seconds=int(remaining))
+        return Text("remaining: " + str(remaining_delta), style=teal_light)
+
+
+class TimeElapsedColumn(ProgressColumn):
+    """Renders estimated time elapsed."""
+
+    # Only refresh twice a second to prevent jitter
+    max_refresh = 0.5
+
+    def render(self, task):
+        """Show time elapsed."""
+        elapsed = task.elapsed
+        if elapsed is None:
+            return Text("-:--:--", style=light_blue_light)
+        elapsed_delta = timedelta(seconds=int(elapsed))
+        return Text("elapsed: " + str(elapsed_delta), style=light_blue_light)
 
 
 class SpeedColumn(TextColumn):
@@ -59,15 +92,25 @@ class FPSpeedColumn(TextColumn):
             return ""
 
 
+base_progress = Progress(
+    "[progress.description]{task.description}",
+    BarColumn(bar_width=None),
+    "[progress.percentage]{task.percentage:>3.0f}%",
+    "•",
+    TimeRemainingColumn(),
+    TimeElapsedColumn(),
+)
+
 train_progress = Progress(
     TextColumn("[bold magenta]Step {task.completed}/{task.total}"),
     SpeedColumn(),
     "•",
     "[progress.description]{task.description}",
     BarColumn(bar_width=None),
-    "•",
     "[progress.percentage]{task.percentage:>3.0f}%",
+    "•",
     TimeRemainingColumn(),
+    TimeElapsedColumn(),
     "•",
     LossColumn(),
     LearningRateColumn(),
@@ -79,8 +122,8 @@ fixed_points_progress = Progress(
     BarColumn(bar_width=None),
     "•",
     "[progress.percentage]{task.percentage:>3.0f}%",
-    "•",
     FPSpeedColumn(),
     "•",
     TimeRemainingColumn(),
+    TimeElapsedColumn(),
 )

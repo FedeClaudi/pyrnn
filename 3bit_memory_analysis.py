@@ -25,7 +25,9 @@ N = 2048 if EXTRACT else 512
 batch_size = 128 if EXTRACT else 32
 
 
-rnn = CustomRNN.load("rnn.pt", n_units=64, input_size=3, output_size=3)
+rnn = CustomRNN.load(
+    "3bit_memory.pt", n_units=256, input_size=3, output_size=3
+)
 
 dataloader = torch.utils.data.DataLoader(
     ThreeBitDataset(N, dataset_length=batch_size),
@@ -44,14 +46,14 @@ constant_inputs = [
 # ----------------------------- Find fixed points ---------------------------- #
 if EXTRACT:
     fp_finder = FixedPoints(
-        rnn, speed_tol=2e-03, noise_scale=1.75, gamma=0.1  # learning rate
+        rnn, speed_tol=2e-02, noise_scale=1.75, gamma=0.1  # learning rate
     )
 
     fp_finder.find_fixed_points(
         h,
         constant_inputs,
         n_initial_conditions=256,
-        max_iters=6000,
+        max_iters=5000,
         lr_decay_epoch=2000,
         max_fixed_points=27,
     )

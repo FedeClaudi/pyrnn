@@ -16,7 +16,7 @@ FIT = True
 n_units = 256
 N = 2048 if FIT else 15000
 batch_size = 128
-epochs = 1
+epochs = 600
 lr_milestones = [100, 500, 800]
 lr = 0.001
 
