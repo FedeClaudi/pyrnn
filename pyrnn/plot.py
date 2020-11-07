@@ -138,7 +138,7 @@ def plot_state_history_pca_3d(
     color="k",
     _show=True,
     actors=None,
-    mark_start=True,
+    mark_start=False,
 ):
     """
     Fits a PCA to high dim hidden state history
@@ -162,7 +162,6 @@ def plot_state_history_pca_3d(
 
     pca = PCA(n_components=3).fit(hh)
 
-    raise ValueError("Plot hidden state history without concatenating it")
     pc = pca.transform(hh)
     points = points_from_pc(pc)
 

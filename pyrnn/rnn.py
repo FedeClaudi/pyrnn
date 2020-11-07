@@ -163,7 +163,7 @@ class CustomRNN(RNNBase):
         # self.w_in.weight = nn.init.uniform_(self.w_in.weight, -0.1, 0.1)
 
         # freeze parameters for input/output layers
-        for layer in (self.w_in, self.w_out):
+        for layer in (self.w_out, self.w_out):
             for p in layer.parameters():
                 p.requires_grad = False
 
