@@ -14,12 +14,20 @@ import sys
 
     each input corresponds to noe output, the output
     is a `memory` of which state the input is in (1, -1)
+
+    ThreeBitDataset creates a pytorch dataset for loading
+    the data during training.
 """
 
 is_win = sys.platform == "win32"
 
 
 class ThreeBitDataset(data.Dataset):
+    """
+    creates a pytorch dataset for loading
+    the data during training.
+    """
+
     def __init__(self, sequence_length, dataset_length=1):
         self.sequence_length = sequence_length
         self.dataset_length = dataset_length
@@ -71,6 +79,9 @@ class ThreeBitDataset(data.Dataset):
 
 
 def make_batch(seq_len):
+    """
+    Return a single batch of given length
+    """
     dataloader = torch.utils.data.DataLoader(
         ThreeBitDataset(seq_len, dataset_length=1),
         batch_size=1,
@@ -84,6 +95,11 @@ def make_batch(seq_len):
 
 
 def plot_predictions(model, seq_len, batch_size):
+    """
+    Run the model on a single batch and plot
+    the model's prediction's against the
+    input data and labels.
+    """
     X, Y = make_batch(seq_len)
     o, h = model.predict(X)
 

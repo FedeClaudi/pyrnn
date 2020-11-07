@@ -9,6 +9,12 @@ from datetime import timedelta
 from rich.text import Text
 from myterial import orange, amber_light, teal_light, light_blue_light
 
+"""
+    Classes to create fancy progress bars
+"""
+
+# ---------------------------------- Columns --------------------------------- #
+
 
 class TimeRemainingColumn(ProgressColumn):
     """Renders estimated time remaining."""
@@ -92,6 +98,8 @@ class FPSpeedColumn(TextColumn):
             return ""
 
 
+# ------------------------------- Progress bars ------------------------------ #
+# General purpose progress bar
 base_progress = Progress(
     "[progress.description]{task.description}",
     BarColumn(bar_width=None),
@@ -101,6 +109,7 @@ base_progress = Progress(
     TimeElapsedColumn(),
 )
 
+# Progress bar used for training RNNs
 train_progress = Progress(
     TextColumn("[bold magenta]Step {task.completed}/{task.total}"),
     SpeedColumn(),
@@ -116,7 +125,7 @@ train_progress = Progress(
     LearningRateColumn(),
 )
 
-
+# Progress bar used for finding fixed points
 fixed_points_progress = Progress(
     "[progress.description]{task.description}",
     BarColumn(bar_width=None),

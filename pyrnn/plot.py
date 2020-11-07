@@ -22,14 +22,21 @@ settings.useFXAA = True  # necessary for rendering of semitransparent actors
 
 
 def plot_training_loss(loss_history):
+    """
+    Simple plot with training loss trajectory
+    """
     f, ax = plt.subplots(figsize=(12, 7))
 
     ax.plot(loss_history, lw=2, color=salmon)
     ax.set(xlabel="epochs", ylabel="loss", title="Training loss")
     clean_axes(f)
+    return f
 
 
 def plot_recurrent_weights(model):
+    """
+    Plot a models recurrent weights as a heatmap
+    """
     f, ax = plt.subplots(figsize=(10, 10))
 
     img = ax.imshow(npify(model.recurrent_weights, flatten=False), cmap="bwr")
@@ -41,9 +48,13 @@ def plot_recurrent_weights(model):
     ax.set(xticks=[], yticks=[], xlabel="units", ylabel="units")
     ax.axis("equal")
     clean_axes(f)
+    return f
 
 
 def plot_fps_graph(graph):
+    """
+    Plot a graph (nx.DiGraph) of fixed points connectivity
+    """
     node_colors_lookup = {
         0: "lightseagreen",
         1: "lightsalmon",
@@ -70,6 +81,9 @@ def plot_fps_graph(graph):
 
 # ------------------------------- vedo renders ------------------------------- #
 def render(actors, _show=True):
+    """
+    Render actors in a vedo windows
+    """
     for act in actors:
         act.lighting("off")
 
@@ -79,6 +93,10 @@ def render(actors, _show=True):
 
 
 def get_fp_color(n, col_set=1):
+    """
+    Get the color of a fixed point given
+    the number of unstable modes
+    """
     if n == 0:
         color = "seagreen" if col_set == 1 else "lightseagreen"
     elif n == 1:
@@ -135,6 +153,12 @@ def plot_fixed_points(
     sequential=False,
     **kwargs,
 ):
+    """
+    Plot fixed points on top of a state history
+    as colored spheres (colored by number of unstable
+    modes) and tubes showing the direction of
+    unstable modes in PCA space
+    """
     hidden_history = flatten_h(hidden_history)
 
     pca, actors = plot_state_history_pca_3d(
@@ -192,6 +216,11 @@ def plot_fixed_points_connectivity_analysis(
     sequential=False,
     **kwargs,
 ):
+    """
+    On top of a fixed points visualisation,
+    show the results of running the fixed points
+    connectivity analysis (trajectory of each initial condition).
+    """
     hidden_history = flatten_h(hidden_history)
 
     pca, actors = plot_fixed_points(
@@ -233,6 +262,10 @@ def plot_fixed_points_connectivity_analysis(
 def plot_fixed_points_connectivity_graph(
     hidden_history, fixed_points, graph, edge_radius=0.1, _show=True, **kwargs
 ):
+    """
+    Show connections in a directed graph with fixed points
+    connectivity as tubes uniting fixed points in PC space.
+    """
     pca, actors = plot_fixed_points(
         hidden_history, fixed_points, scale=0.5, _show=False, **kwargs
     )

@@ -4,6 +4,9 @@ from itertools import combinations_with_replacement as combinations
 
 
 def flatten_h(h):
+    """
+    Flatten the hidden state array
+    """
     if len(h.shape) < 3:
         return h
     else:
@@ -11,6 +14,9 @@ def flatten_h(h):
 
 
 def torchify(arr, flatten=False):
+    """
+    Turn a numpy array into a tensor
+    """
     tensor = torch.from_numpy(arr.astype(np.float32))
 
     if flatten:
@@ -19,6 +25,9 @@ def torchify(arr, flatten=False):
 
 
 def npify(tensor, flatten=False):
+    """
+    Turn a tensor into a numpy array
+    """
     if not isinstance(tensor, np.ndarray):
         tensor = tensor.detach().numpy()
 
@@ -35,12 +44,15 @@ def npify(tensor, flatten=False):
 
 
 def prepend_dim(arr):
+    """
+    Add a dimension to an array
+    """
     return arr.reshape(1, -1)
 
 
 def pairs(iterable):
     """
-    returns all ordered pairs of items from an iterable
+    Returns all ordered pairs of items from an iterable
     """
     combos = list(combinations(iterable, 2))
     return combos + [(b, a) for a, b in combos]
