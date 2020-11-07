@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from myterial import salmon
 import numpy as np
-from vedo import Lines, show, Spheres, Sphere, Tube
+from vedo import Lines, show, Sphere, Tube
 from sklearn.decomposition import PCA
 from rich import print
 import networkx as nx
@@ -24,6 +24,9 @@ settings.useFXAA = True  # necessary for rendering of semitransparent actors
 def plot_training_loss(loss_history):
     """
     Simple plot with training loss trajectory
+
+    Arguments:
+        loss_history (list): loss at each epoch during training
     """
     f, ax = plt.subplots(figsize=(12, 7))
 
@@ -36,6 +39,9 @@ def plot_training_loss(loss_history):
 def plot_recurrent_weights(model):
     """
     Plot a models recurrent weights as a heatmap
+
+    Arguments:
+        model (RNN): a built RNN
     """
     f, ax = plt.subplots(figsize=(10, 10))
 
@@ -54,6 +60,10 @@ def plot_recurrent_weights(model):
 def plot_fps_graph(graph):
     """
     Plot a graph (nx.DiGraph) of fixed points connectivity
+
+    Arguments:
+        graph (nx.DiGraph): results of running FixedConnectivity analysis.
+            A directed graph showing connections among fixed points
     """
     node_colors_lookup = {
         0: "lightseagreen",
@@ -82,7 +92,12 @@ def plot_fps_graph(graph):
 # ------------------------------- vedo renders ------------------------------- #
 def render(actors, _show=True):
     """
-    Render actors in a vedo windows
+    Render actors in a vedo windows after
+    applying a shader style
+
+    Arguments:
+        actors (list): list of vedo Mesh instances
+        _show (bool): if true the actors are rendred
     """
     for act in actors:
         act.lighting("off")
@@ -96,6 +111,13 @@ def get_fp_color(n, col_set=1):
     """
     Get the color of a fixed point given
     the number of unstable modes
+
+    Arguments:
+        n (int): number of unstable modes
+        col_set (int): which colors set to use
+
+    Returns:
+        color (str)
     """
     if n == 0:
         color = "seagreen" if col_set == 1 else "lightseagreen"
@@ -114,20 +136,34 @@ def plot_state_history_pca_3d(
     lw=20,
     alpha=0.1,
     color="k",
-    pts=None,
     _show=True,
     actors=None,
-    mark_start=False,
+    mark_start=True,
 ):
     """
     Fits a PCA to high dim hidden state history
-    and plots the result in 3d with vedo
+    and plots the result in 3d with vedo.
+
+    Arguments:
+        hidden_history (np.ndarray): array with history of hidden states
+        lw (int): line weight of hidden state trace
+        alpha(float): transparency of hidden state trace
+        color (str): color of hidden state trace
+        _show (bool): if true the actors are rendered
+        actors (list): a list of actors to add to the visualisation
+        mark_start (bool): if true a spehere is added to
+            mark the start of the hidden trace
+
+    Returns:
+        pca (PCA): PCA model fit to hidden history
+        actors (list): list of actors
     """
-    hidden_history = flatten_h(hidden_history)
+    hh = flatten_h(hidden_history)
 
-    pca = PCA(n_components=3).fit(hidden_history)
+    pca = PCA(n_components=3).fit(hh)
 
-    pc = pca.transform(hidden_history)
+    raise ValueError("Plot hidden state history without concatenating it")
+    pc = pca.transform(hh)
     points = points_from_pc(pc)
 
     actors = actors or []
@@ -135,10 +171,6 @@ def plot_state_history_pca_3d(
 
     if mark_start:
         actors.append(Sphere(points[0][0], r=0.15, c=color))
-
-    if pts is not None:
-        pts = pca.transform(pts)
-        actors.append(Spheres(pts, r=0.15, c="r"))
 
     render(actors, _show=_show)
     return pca, actors
@@ -158,28 +190,46 @@ def plot_fixed_points(
     as colored spheres (colored by number of unstable
     modes) and tubes showing the direction of
     unstable modes in PCA space
-    """
-    hidden_history = flatten_h(hidden_history)
 
+    Arguments:
+        hidden_history (np.ndarray): array with history of hidden states
+        fixed_points (list): list of FixedPoint instances
+        scale (float): scale of the tube showing unstable modes
+        _show (bool): if True the scene is rendered
+        fpoint_radius (float): radius of sphere showing each fixed point
+        sequential (bool): if True the FPS are shown in order of increasing
+            number of unstable modes
+
+    Returns:
+        pca (PCA): PCA model fit to hidden history
+        actors (list): list of actors
+    """
+    # Plot hidden history
     pca, actors = plot_state_history_pca_3d(
         hidden_history, **kwargs, _show=False
     )
 
+    # Specify a transform function
     t = pca.transform
 
+    # Loop over the number of unstable modes
     _vis_actors = actors.copy()
     for n in (0, 1, 2, 3):
         vis_actors = _vis_actors.copy()
 
+        # loop over fixed ponts
         for fp in fixed_points:
+            # Get position
             pos = t(fp.h.reshape(1, -1))[0, :]
 
+            # Get color
             n_unstable = fp.n_unstable_modes
             if n_unstable != n and sequential:
                 continue
 
             color = get_fp_color(n_unstable)
-            # plot unstable directions
+
+            # plot unstable modes
             for stable, eigval, eigvec in fp.eigenmodes:
                 if not stable:
                     delta = eigval * -eigvec * scale
@@ -195,6 +245,7 @@ def plot_fixed_points(
                         )
                     )
 
+            # plot fixed points
             vis_actors.append(Sphere(pos, c=color, r=0.1))
 
         render(vis_actors, _show=_show)
@@ -209,7 +260,6 @@ def plot_fixed_points_connectivity_analysis(
     hidden_history,
     fixed_points,
     fps_connectivity,
-    scale=0.5,
     _show=True,
     traj_radius=0.01,
     initial_conditions_radius=0.05,
@@ -220,11 +270,29 @@ def plot_fixed_points_connectivity_analysis(
     On top of a fixed points visualisation,
     show the results of running the fixed points
     connectivity analysis (trajectory of each initial condition).
+
+
+    Arguments:
+        hidden_history (np.ndarray): array with history of hidden states
+        fixed_points (list): list of FixedPoint instances
+        fps_connectivity (list): list with tuples with outcomes
+            of running the fixed point connectivity analysis on eahc initial condition.
+        _show (bool): if True the scene is rendered
+        traj_radius (float): radius of tube used to show each initial condition trajectory
+        initial_conditions_radius (float): radius of sphere showing location of
+            each initial condition
+        sequential (bool): if True trajectories are shown in sequence based on the number
+            of unstable modes of the initial condition's FixedPoint.
+
+
+    Returns:
+        pca (PCA): PCA model fit to hidden history
+        actors (list): list of actors
     """
     hidden_history = flatten_h(hidden_history)
 
     pca, actors = plot_fixed_points(
-        hidden_history, fixed_points, scale=0.5, _show=False, **kwargs
+        hidden_history, fixed_points, _show=False, **kwargs
     )
 
     def t(arr):
@@ -265,7 +333,21 @@ def plot_fixed_points_connectivity_graph(
     """
     Show connections in a directed graph with fixed points
     connectivity as tubes uniting fixed points in PC space.
+
+       Arguments:
+            hidden_history (np.ndarray): array with history of hidden states
+            fixed_points (list): list of FixedPoint instances
+            graph (nx.DiGraph): results of running FixedConnectivity analysis.
+                A directed graph showing connections among fixed points
+            edge_radius (float): radius of tube used to show graph edges
+            _show (bool): if True the scene is rendered
+
+
+        Returns:
+            pca (PCA): PCA model fit to hidden history
+            actors (list): list of actors
     """
+
     pca, actors = plot_fixed_points(
         hidden_history, fixed_points, scale=0.5, _show=False, **kwargs
     )
