@@ -22,14 +22,16 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 # ----------------------------------- setup ---------------------------------- #
 EXTRACT = False
-CONNECTIVITY = False
+CONNECTIVITY = True
 RENDER = True
 
 N = 2048 if EXTRACT else 512
 batch_size = 128 if EXTRACT else 32
 
 
-rnn = CustomRNN.load("3bit_memory.pt", n_units=50, input_size=3, output_size=3)
+rnn = CustomRNN.load(
+    "3bit_memory.pt", n_units=128, input_size=3, output_size=3
+)
 
 dataloader = torch.utils.data.DataLoader(
     ThreeBitDataset(N, dataset_length=batch_size),
@@ -47,13 +49,13 @@ constant_inputs = [
 
 # ----------------------------- Find fixed points ---------------------------- #
 if EXTRACT:
-    fp_finder = FixedPoints(rnn, speed_tol=2e-02, noise_scale=1.75)
+    fp_finder = FixedPoints(rnn, speed_tol=2e-02, noise_scale=2)
 
     fp_finder.find_fixed_points(
         h,
         constant_inputs,
-        n_initial_conditions=100,
-        max_iters=7000,
+        n_initial_conditions=150,
+        max_iters=9000,
         lr_decay_epoch=1500,
         max_fixed_points=27,
         gamma=0.1,
@@ -72,7 +74,7 @@ if CONNECTIVITY:
     fps_connectivity = FixedPointsConnectivity(
         rnn,
         fps,
-        n_initial_conditions_per_fp=64,
+        n_initial_conditions_per_fp=256,
         noise_scale=0.1,
     )
     outcomes, graph = fps_connectivity.get_connectivity(
@@ -81,7 +83,13 @@ if CONNECTIVITY:
 
 if RENDER and CONNECTIVITY:
     plot_fixed_points_connectivity_analysis(
-        h, fps, outcomes, alpha=0.005, sequential=True
+        h,
+        fps,
+        outcomes,
+        alpha=0.005,
+        sequential=True,
+        traj_alpha=0.05,
+        traj_radius=0.1,
     )
 
     plot_fixed_points_connectivity_graph(h, fps, graph, alpha=0.005)

@@ -261,6 +261,7 @@ def plot_fixed_points_connectivity_analysis(
     fps_connectivity,
     _show=True,
     traj_radius=0.01,
+    traj_alpha=1,
     initial_conditions_radius=0.05,
     sequential=False,
     **kwargs,
@@ -311,7 +312,7 @@ def plot_fixed_points_connectivity_analysis(
 
             trajectory = [t(tp) for tp in trajectory]
             vis_actors.append(
-                Tube(trajectory, c=color, r=traj_radius, alpha=1)
+                Tube(trajectory, c=color, r=traj_radius, alpha=traj_alpha)
             )
             vis_actors.append(
                 Sphere(trajectory[0], r=initial_conditions_radius, c=color)
