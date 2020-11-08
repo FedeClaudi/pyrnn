@@ -1,9 +1,10 @@
 import numpy as np
 import torch
 from rich import print
-from myterial import amber_light, orange
+from myterial import amber_light, orange, cyan
 from scipy.spatial.distance import euclidean
 from collections import namedtuple
+from pyinspect import Report
 
 from pyrnn._progress import fixed_points_progress
 from pyrnn._io import save_json, load_json
@@ -11,6 +12,24 @@ from pyrnn._utils import flatten_h
 
 # named tuple storing eigen modes info
 eig_mode = namedtuple("eigmode", "stable, eigv, eigvec")
+
+
+def list_fixed_points(fps):
+    """
+    Prints an overview of a list of fixed points
+
+    Argument:
+        fps: list of FixedPoint objects
+    """
+
+    rep = Report(title="fps", color=amber_light, accent=orange)
+    fps = sorted(fps, key=lambda fp: fp.n_unstable_modes)
+    for fp in fps:
+        s = f"[b {orange}]{fp.fp_id:03}[/b {orange}] - Stable: [{cyan}]{fp.is_stable}[/{cyan}]"
+        if not fp.is_stable:
+            s += f" | n unstable modes: {fp.n_unstable_modes}"
+        rep.add(s)
+    rep.print()
 
 
 class FixedPoint(object):
@@ -135,7 +154,7 @@ class FixedPoint(object):
         # count number of untable modes
         self.n_unstable_modes = np.sum(
             [1 for mode in self.eigenmodes if not mode.stable]
-        )
+        ).astype(np.int32)
 
 
 class FixedPoints(object):

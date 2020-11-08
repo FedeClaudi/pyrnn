@@ -1,11 +1,14 @@
 import matplotlib.pyplot as plt
 import os
+from vedo import show
+import numpy as np
+import torch
+from vedo.colors import colorMap
 
 from pyrnn import CustomRNN, plot_training_loss, plot_state_history_pca_3d
-from pyrnn.tasks.three_bit_memory import (
-    ThreeBitDataset,
+from pyrnn.tasks.sinewave import (
+    SineWaveDataset,
     plot_predictions,
-    make_batch,
 )
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
@@ -13,20 +16,20 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 # ---------------------------------- Params ---------------------------------- #
 FIT = True
 
-n_units = 50
-N = 1024 if FIT else 15000
-batch_size = 256
-epochs = 700
+n_units = 64
+N = 50
+batch_size = 4000
+epochs = 1024
 lr_milestones = [500, 800]
-lr = 0.005
+lr = 0.001
 
 # ------------------------------- Fit/load RNN ------------------------------- #
 if FIT:
-    dataset = ThreeBitDataset(N, dataset_length=8)
+    dataset = SineWaveDataset(N, dataset_length=250)
 
     rnn = CustomRNN(
-        input_size=3,
-        output_size=3,
+        input_size=1,
+        output_size=1,
         autopses=True,
         dale_ratio=None,
         n_units=n_units,
@@ -41,20 +44,30 @@ if FIT:
         input_length=N,
         lr_milestones=lr_milestones,
         l2norm=0,
-        report_path="3bit_memory.txt",
+        report_path="sinewave.txt",
+        stop_loss=0.0007,
     )
-    rnn.save("3bit_memory.pt")
+    rnn.save("sinewave.pt")
 
     plot_predictions(rnn, N, batch_size)
     plot_training_loss(loss_history)
     plt.show()
 else:
     rnn = CustomRNN.load(
-        "3bit_memory.pt", n_units=n_units, input_size=3, output_size=3
+        "sinewave.pt", n_units=n_units, input_size=1, output_size=1
     )
 
 # ------------------------------- Activity PCA ------------------------------- #
-X, Y = make_batch(N)
-o, h = rnn.predict_with_history(X)
+actors = []
+N = 500
+for freq in np.arange(0.1, 1, step=0.1):
+    X = torch.ones(1, N, 1) * freq
+    o, h = rnn.predict_with_history(X)
 
-plot_state_history_pca_3d(h, alpha=0.01)
+    color = colorMap(freq, name="viridis", vmin=0, vmax=1)
+
+    pca, actors = plot_state_history_pca_3d(
+        h, alpha=1, color=color, actors=actors, _show=False, mark_start=True
+    )
+print("Ready")
+show(*actors)

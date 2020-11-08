@@ -3,8 +3,8 @@ import numpy as np
 import torch
 
 from pyrnn import CustomRNN
-from pyrnn.tasks.three_bit_memory import (
-    ThreeBitDataset,
+from pyrnn.tasks.sinewave import (
+    SineWaveDataset,
     is_win,
 )
 from pyrnn.analysis import (
@@ -32,7 +32,7 @@ batch_size = 128 if EXTRACT else 32
 rnn = CustomRNN.load("3bit_memory.pt", n_units=50, input_size=3, output_size=3)
 
 dataloader = torch.utils.data.DataLoader(
-    ThreeBitDataset(N, dataset_length=batch_size),
+    SineWaveDataset(N, dataset_length=batch_size),
     batch_size=batch_size,
     num_workers=0 if is_win else 2,
     shuffle=True,
@@ -47,13 +47,13 @@ constant_inputs = [
 
 # ----------------------------- Find fixed points ---------------------------- #
 if EXTRACT:
-    fp_finder = FixedPoints(rnn, speed_tol=2e-02, noise_scale=1.75)
+    fp_finder = FixedPoints(rnn, speed_tol=5e-03, noise_scale=1.75)
 
     fp_finder.find_fixed_points(
         h,
         constant_inputs,
         n_initial_conditions=100,
-        max_iters=7000,
+        max_iters=15000,
         lr_decay_epoch=1500,
         max_fixed_points=27,
         gamma=0.1,
