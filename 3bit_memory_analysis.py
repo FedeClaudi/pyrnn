@@ -21,7 +21,7 @@ from pyrnn.plot import (
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 # ----------------------------------- setup ---------------------------------- #
-EXTRACT = True
+EXTRACT = False
 CONNECTIVITY = False
 RENDER = True
 
@@ -64,7 +64,7 @@ if EXTRACT:
 # ----------------------------------- Plot ----------------------------------- #
 fps = FixedPoints.load_fixed_points("rnn.json")
 list_fixed_points(fps)
-if RENDER and EXTRACT:
+if RENDER:
     plot_fixed_points(h, fps, alpha=0.005, scale=1, sequential=False)
 
 # ----------------------------- fps connectivity ----------------------------- #

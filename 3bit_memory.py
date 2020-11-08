@@ -13,7 +13,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 # ---------------------------------- Params ---------------------------------- #
 FIT = True
 
-n_units = 50
+n_units = 128
 N = 1024 if FIT else 15000
 batch_size = 256
 epochs = 700
