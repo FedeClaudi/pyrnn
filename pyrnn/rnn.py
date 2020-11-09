@@ -129,7 +129,7 @@ class CustomRNN(RNNBase):
 
         # Compute hidden
         nbatch, length, ninp = x.shape
-        out = torch.zeros(length, nbatch, ninp)
+        out = torch.zeros(length, nbatch, self.output_size)
         for t in range(length):
             h = self.activation(self.w_rec(h) + self.w_in(x[:, t, :]))
 

@@ -10,7 +10,7 @@ requirements = [
     "pyinspect",
     "matplotlib",
     "seaborn",
-    "pytorch",
+    "torch",
     "numpy",
     "networkx",
     "myterial",

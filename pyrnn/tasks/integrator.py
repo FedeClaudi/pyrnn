@@ -25,38 +25,54 @@ class IntegratorDataset(data.Dataset):
     the data during training.
     """
 
-    def __init__(self, sequence_length, dataset_length=1):
+    def __init__(self, sequence_length, dataset_length=1, k=2):
         self.sequence_length = sequence_length
         self.dataset_length = dataset_length
+        self.k = k
 
     def __len__(self):
         return self.dataset_length
 
+    def _mk(self):
+        seq_len = self.sequence_length
+        x = np.zeros(seq_len)
+
+        curr = True
+        for n in np.arange(seq_len):
+            if rnd.rand() < 0.05:
+                curr = not curr
+            x[n] = 1 if curr else 0
+
+        vel = 0.2
+        turn = [vel if xx else -vel for xx in x]
+        y = np.cumsum(turn)
+        phases = (np.arctan2(np.sin(y), np.cos(y))) / np.pi
+
+        return torchify(x), torchify(phases)
+
     def __getitem__(self, item):
         seq_len = self.sequence_length
-        X_batch = torch.zeros((seq_len, 2))
-        Y_batch = torch.zeros((seq_len, 2))
+        if self.k > 1:
+            X_batch = torch.zeros((seq_len, self.k))
+            Y_batch = torch.zeros((seq_len, self.k))
 
-        for m in range(2):
-            x = rnd.normal(0, 1, self.sequence_length)
-            y = np.cumsum(x)
+            for m in range(self.k):
+                x, y = self._mk()
+                X_batch[:, m] = x
+                Y_batch[:, m] = y
 
-            fact = 1 / (y.max() - y.min())
-            x *= fact
-            y *= fact
-
-            X_batch[:, m] = torchify(x)
-            Y_batch[:, m] = torchify(y)
-
-        return X_batch, Y_batch
+            return X_batch, Y_batch
+        else:
+            x, y = self._mk()
+            return x.reshape(-1, 1), y.reshape(-1, 1)
 
 
-def make_batch(seq_len):
+def make_batch(seq_len, **kwargs):
     """
     Return a single batch of given length
     """
     dataloader = torch.utils.data.DataLoader(
-        IntegratorDataset(seq_len, dataset_length=1),
+        IntegratorDataset(seq_len, dataset_length=1, **kwargs),
         batch_size=1,
         num_workers=0 if is_win else 2,
         shuffle=True,
@@ -67,16 +83,20 @@ def make_batch(seq_len):
     return batch
 
 
-def plot_predictions(model, seq_len, batch_size):
+def plot_predictions(model, seq_len, batch_size, **kwargs):
     """
     Run the model on a single batch and plot
     the model's prediction's against the
     input data and labels.
     """
-    X, Y = make_batch(seq_len)
+    X, Y = make_batch(seq_len, **kwargs)
     o, h = model.predict(X)
 
-    f, axarr = plt.subplots(nrows=2, figsize=(12, 9))
+    k = X.shape[-1]
+
+    f, axarr = plt.subplots(nrows=k, figsize=(12, 9))
+    if not isinstance(axarr, np.ndarray):
+        axarr = [axarr]
     for n, ax in enumerate(axarr):
         ax.plot(X[0, :, n], lw=2, color=salmon, label="input")
         ax.plot(

@@ -13,25 +13,26 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 # ---------------------------------- Params ---------------------------------- #
 FIT = True
 
+K = 1
 n_units = 64
-N = 256 if FIT else 15000
+N = 40
 batch_size = 5000
-epochs = 800
-lr_milestones = [300, 1300]
-lr = 0.01
+epochs = 5000
+lr_milestones = [600, 1300]
+lr = 0.001
+stop_loss = 0.001
 
 # ------------------------------- Fit/load RNN ------------------------------- #
 if FIT:
-    dataset = IntegratorDataset(N, dataset_length=1000)
+    dataset = IntegratorDataset(N, dataset_length=200, k=K)
 
-    # rnn = CustomRNN(
-    #     input_size=2,
-    #     output_size=2,
-    #     autopses=True,
-    #     dale_ratio=None,
-    #     n_units=n_units,
-    # )
-    rnn = CustomRNN.from_json("integrator.json")
+    rnn = CustomRNN(
+        input_size=K,
+        output_size=K,
+        autopses=True,
+        dale_ratio=None,
+        n_units=n_units,
+    )
 
     rnn.save_params("integrator.json")
 
@@ -45,21 +46,23 @@ if FIT:
         lr_milestones=lr_milestones,
         l2norm=0,
         report_path="3bit_memory.txt",
+        stop_loss=stop_loss,
     )
     rnn.save("3bit_memory.pt")
 
-    plot_predictions(rnn, N, batch_size)
+    plot_predictions(rnn, N, batch_size, k=K)
     plot_training_loss(loss_history)
     plt.show()
 else:
     rnn = CustomRNN.load(
-        "3bit_memory.pt", n_units=n_units, input_size=2, output_size=2
+        "3bit_memory.pt", n_units=n_units, input_size=K, output_size=K
     )
 
 # ------------------------------- Activity PCA ------------------------------- #
 actors = []
-X, Y = make_batch(N)
+N = 15000
+X, Y = make_batch(N, k=K)
 o, h = rnn.predict_with_history(X)
 plot_state_history_pca_3d(
-    h, alpha=0.01, actors=actors, mark_start=True, axes=8
+    h, alpha=0.005, actors=actors, mark_start=True, axes=8
 )

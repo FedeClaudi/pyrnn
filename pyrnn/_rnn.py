@@ -549,8 +549,8 @@ class RNNBase(nn.Module):
                         completed=step,
                     )
                     o, h = self(X[trialn, step, :].reshape(1, 1, -1), h)
-                    hidden_trace[trialn, step, :] = h.detach().numpy()
-                    output_trace[trialn, step, :] = o.detach().numpy()
+                    hidden_trace[trialn, step, :] = npify(h)
+                    output_trace[trialn, step, :] = npify(o)
 
                 progress.remove_task(trial_id)
             progress.remove_task(main_id)

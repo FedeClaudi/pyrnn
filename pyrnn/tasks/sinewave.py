@@ -60,10 +60,10 @@ class SineWaveDataset(data.Dataset):
 
         x = np.ones(self.sequence_length) * inp
 
-        X = torchify(x.astype(np.float32)).reshape(-1, 1)
+        X = torchify(x).reshape(-1, 1)
 
         y = np.sin(2 * np.pi * omega * t)
-        Y = torchify(y.astype(np.float32)).reshape(-1, 1)
+        Y = torchify(y).reshape(-1, 1)
 
         return X, Y
 
