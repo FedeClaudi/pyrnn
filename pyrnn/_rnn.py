@@ -9,9 +9,30 @@ import pyinspect as pi
 
 from ._progress import train_progress, base_progress
 from ._utils import npify
+from ._io import load_json, save_json
 
 
 is_win = sys.platform == "win32"
+
+# --------------------------- Placeholder functions -------------------------- #
+
+
+def on_epoch_start(rnn, *args, **kwargs):
+    """
+    Called at start of each epoch during training.
+    """
+    return
+
+
+def on_batch_start(rnn, X, Y):
+    """
+    Called at start of each batch during training.
+    Can return an initialized hidden state h.
+    """
+    return
+
+
+# ---------------------------- Weights initializer --------------------------- #
 
 
 class RecurrentWeightsInitializer(object):
@@ -89,6 +110,9 @@ class RecurrentWeightsInitializer(object):
         )
 
 
+# ------------------------------ Base RNN class ------------------------------ #
+
+
 class RNNBase(nn.Module):
     """
     Base RNN class, implements method
@@ -137,12 +161,69 @@ class RNNBase(nn.Module):
 
         # recurrent weights are not definite yet
         self._is_built = False
+        self.params = {}
 
-    def _show(self):
-        print(self)
+        # place holder functions, to be replaced if necessary
+        self.on_epoch_start = on_epoch_start
+        self.on_batch_start = on_batch_start
 
-    def __str__(self):
-        self._show()
+    @classmethod
+    def from_dict(cls, params):
+        """
+        Create a class instance from a dictionary of arguments
+
+        Arguments:
+            params (dict): dictionary of params to be passed as
+                keyword arguments to the RNN class
+        """
+        try:
+            rnn = cls(**params)
+        except Exception as e:
+            raise ValueError(f"Failed to isntantiate RNN from dictionary: {e}")
+        return rnn
+
+    @classmethod
+    def from_json(cls, filepath):
+        """
+        Create a class instance by loading a parameters json file
+
+        Arguments:
+            filepath (str, Path): path to a .json file with a
+                RNN parameter's
+        """
+        return cls.from_dict(load_json(filepath))
+
+    def save_params(self, filepath):
+        """
+        Save the network's parameter's to a json file
+
+        Arguments:
+            filepath (str, Path); path to a .json file
+        """
+        save_json(filepath, self.params)
+
+    def save(self, path):
+        """
+        Save model to .pt file
+        """
+        if not path.endswith(".pt"):
+            raise ValueError("Expected a path point to a .pt file")
+        print(f"[{amber_light}]Saving model at: [{orange}]{path}")
+        torch.save(self.state_dict(), path)
+
+    @classmethod
+    def load(cls, path, *args, **kwargs):
+        """
+        Load model from .pt file
+        """
+        if not path.endswith(".pt"):
+            raise ValueError("Expected a path point to a .pt file")
+
+        print(f"[{amber_light}]Loading model from: [{orange}]{path}")
+        model = cls(*args, **kwargs)
+        model.load_state_dict(torch.load(path))
+        model.eval()
+        return model
 
     def get_recurrent_weights(self, *args, **kwargs):
         """
@@ -185,29 +266,6 @@ class RNNBase(nn.Module):
         self.set_recurrent_weights(initializer.weights)
 
         self._is_built = True
-
-    def save(self, path):
-        """
-        Save model to .pt file
-        """
-        if not path.endswith(".pt"):
-            raise ValueError("Expected a path point to a .pt file")
-        print(f"[{amber_light}]Saving model at: [{orange}]{path}")
-        torch.save(self.state_dict(), path)
-
-    @classmethod
-    def load(cls, path, *args, **kwargs):
-        """
-        Load model from .pt file
-        """
-        if not path.endswith(".pt"):
-            raise ValueError("Expected a path point to a .pt file")
-
-        print(f"[{amber_light}]Loading model from: [{orange}]{path}")
-        model = cls(*args, **kwargs)
-        model.load_state_dict(torch.load(path))
-        model.eval()
-        return model
 
     def _initialize_hidden(self, x, *args):
         """
@@ -333,13 +391,13 @@ class RNNBase(nn.Module):
         for batchn, batch in enumerate(loader):
             # initialise
             X, Y = batch
-            self._labels = Y
+            h = self.on_batch_start(self, X, Y)
 
             # zero gradient
             optimizer.zero_grad()
 
             # predict
-            output, h = self(X)
+            output, h = self(X, h=h)
 
             # backprop + optimizer
             loss = criterion(output, Y)
@@ -411,6 +469,7 @@ class RNNBase(nn.Module):
 
             # loop over epochs
             for epoch in range(n_epochs + 1):
+                self.on_epoch_start(self, epoch)
                 epoch_loss, lr = self._fit_run_epoch(*operators)
 
                 train_progress.update(
@@ -492,8 +551,9 @@ class RNNBase(nn.Module):
                     o, h = self(X[trialn, step, :].reshape(1, 1, -1), h)
                     hidden_trace[trialn, step, :] = h.detach().numpy()
                     output_trace[trialn, step, :] = o.detach().numpy()
-                progress.remove_task(trial_id)
 
+                progress.remove_task(trial_id)
+            progress.remove_task(main_id)
         return output_trace, hidden_trace
 
     def predict(self, X):

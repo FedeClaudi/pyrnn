@@ -90,7 +90,7 @@ def plot_fps_graph(graph):
 
 
 # ------------------------------- vedo renders ------------------------------- #
-def render(actors, _show=True):
+def render(actors, _show=True, axes=0):
     """
     Render actors in a vedo windows after
     applying a shader style
@@ -104,7 +104,7 @@ def render(actors, _show=True):
 
     if _show:
         print("[green]Render ready")
-        show(*actors)
+        show(*actors, axes=axes)
 
 
 def get_fp_color(n, col_set=1):
@@ -139,6 +139,7 @@ def plot_state_history_pca_3d(
     _show=True,
     actors=None,
     mark_start=False,
+    axes=0,
 ):
     """
     Fits a PCA to high dim hidden state history
@@ -171,7 +172,7 @@ def plot_state_history_pca_3d(
     if mark_start:
         actors.append(Sphere(points[0][0], r=0.15, c=color))
 
-    render(actors, _show=_show)
+    render(actors, _show=_show, axes=axes)
     return pca, actors
 
 
