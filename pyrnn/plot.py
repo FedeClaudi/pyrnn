@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from myterial import salmon
 import numpy as np
-from vedo import Lines, show, Sphere, Tube
+from vedo import show, Sphere, Tube
 from sklearn.decomposition import PCA
 from rich import print
 import networkx as nx
@@ -133,7 +133,7 @@ def get_fp_color(n, col_set=1):
 
 def plot_state_history_pca_3d(
     hidden_history,
-    lw=20,
+    lw=0.1,
     alpha=0.1,
     color="k",
     _show=True,
@@ -167,10 +167,13 @@ def plot_state_history_pca_3d(
     points = points_from_pc(pc)
 
     actors = actors or []
-    actors.append(Lines(points).lw(lw).alpha(alpha).c(color))
+    actors.append(Tube([p[0] for p in points], alpha=alpha, c=color, r=lw))
 
     if mark_start:
-        actors.append(Sphere(points[0][0], r=0.15, c=color))
+        try:
+            actors.append(Sphere(points[0][0], r=0.15, c=color))
+        except Exception:
+            actors.append(Sphere(points[0][0], r=0.15, c=color[0]))
 
     render(actors, _show=_show, axes=axes)
     return pca, actors

@@ -8,7 +8,7 @@ import sys
 import pyinspect as pi
 
 from ._progress import train_progress, base_progress
-from ._utils import npify
+from ._utils import npify, GracefulInterruptHandler
 from ._io import load_json, save_json
 
 
@@ -458,30 +458,31 @@ class RNNBase(nn.Module):
         )
 
         losses = []
-        with train_progress as progress:
-            tid = progress.add_task(
-                "Training",
-                start=True,
-                total=n_epochs,
-                loss=0,
-                lr=lr,
-            )
-
-            # loop over epochs
-            for epoch in range(n_epochs + 1):
-                self.on_epoch_start(self, epoch)
-                epoch_loss, lr = self._fit_run_epoch(*operators)
-
-                train_progress.update(
-                    tid,
-                    completed=epoch,
-                    loss=epoch_loss,
+        with GracefulInterruptHandler() as h:
+            with train_progress as progress:
+                tid = progress.add_task(
+                    "Training",
+                    start=True,
+                    total=n_epochs,
+                    loss=0,
                     lr=lr,
                 )
-                losses.append((epoch, epoch_loss))
 
-                if epoch_loss <= stop_loss:
-                    break
+                # loop over epochs
+                for epoch in range(n_epochs + 1):
+                    self.on_epoch_start(self, epoch)
+                    epoch_loss, lr = self._fit_run_epoch(*operators)
+
+                    train_progress.update(
+                        tid,
+                        completed=epoch,
+                        loss=epoch_loss,
+                        lr=lr,
+                    )
+                    losses.append((epoch, epoch_loss))
+
+                    if epoch_loss <= stop_loss or h.interrupted:
+                        break
 
         # Make report about training process
         self._fit_report(

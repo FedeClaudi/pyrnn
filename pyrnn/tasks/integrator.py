@@ -5,6 +5,7 @@ import torch
 from myterial import salmon, light_green_dark, indigo_light
 import torch.utils.data as data
 import sys
+from random import choice
 
 from pyrnn._plot import clean_axes
 from pyrnn._utils import torchify
@@ -25,6 +26,8 @@ class IntegratorDataset(data.Dataset):
     the data during training.
     """
 
+    speeds = [-0.2, 0.2]
+
     def __init__(self, sequence_length, dataset_length=1, k=2):
         self.sequence_length = sequence_length
         self.dataset_length = dataset_length
@@ -37,15 +40,14 @@ class IntegratorDataset(data.Dataset):
         seq_len = self.sequence_length
         x = np.zeros(seq_len)
 
-        curr = True
+        speed = choice(self.speeds)
         for n in np.arange(seq_len):
             if rnd.rand() < 0.05:
-                curr = not curr
-            x[n] = 1 if curr else 0
+                speed = choice(self.speeds)
+            x[n] = speed
 
-        vel = 0.2
-        turn = [vel if xx else -vel for xx in x]
-        y = np.cumsum(turn)
+        # turn = [vel if xx else -vel for xx in x]
+        y = np.cumsum(x)
         phases = (np.arctan2(np.sin(y), np.cos(y))) / np.pi
 
         return torchify(x), torchify(phases)
