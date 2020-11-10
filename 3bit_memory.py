@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import os
 
-from pyrnn import CustomRNN, plot_training_loss, plot_state_history_pca_3d
+from pyrnn import RNN, plot_training_loss, plot_state_history_pca_3d
 from pyrnn.tasks.three_bit_memory import (
     ThreeBitDataset,
     plot_predictions,
@@ -24,7 +24,7 @@ lr = 0.005
 if FIT:
     dataset = ThreeBitDataset(N, dataset_length=8)
 
-    rnn = CustomRNN(
+    rnn = RNN(
         input_size=3,
         output_size=3,
         autopses=True,
@@ -49,7 +49,7 @@ if FIT:
     plot_training_loss(loss_history)
     plt.show()
 else:
-    rnn = CustomRNN.load(
+    rnn = RNN.load(
         "3bit_memory.pt", n_units=n_units, input_size=3, output_size=3
     )
 

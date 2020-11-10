@@ -2,7 +2,7 @@ import os
 import numpy as np
 import torch
 
-from pyrnn import CustomRNN
+from pyrnn import RNN
 from pyrnn.tasks.integrator import IntegratorDataset, is_win
 from pyrnn.analysis import (
     FixedPoints,
@@ -26,7 +26,7 @@ N = 2048 if EXTRACT else 512
 batch_size = 64 if EXTRACT else 32
 
 
-rnn = CustomRNN.load("integrator.pt", n_units=64, input_size=1, output_size=1)
+rnn = RNN.load("integrator.pt", n_units=64, input_size=1, output_size=1)
 
 dataloader = torch.utils.data.DataLoader(
     IntegratorDataset(N, dataset_length=batch_size, k=1),

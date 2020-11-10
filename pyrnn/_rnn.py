@@ -2,9 +2,11 @@ import torch
 import torch.nn as nn
 from rich import print
 from rich.table import Table
+from rich.prompt import Confirm
 from myterial import amber_light, orange, salmon
 import numpy as np
 import sys
+from pathlib import Path
 import pyinspect as pi
 
 from ._progress import train_progress, base_progress
@@ -208,6 +210,13 @@ class RNNBase(nn.Module):
         """
         if not path.endswith(".pt"):
             raise ValueError("Expected a path point to a .pt file")
+        path = Path(path)
+        if path.exists():
+            if not Confirm.ask(
+                f"{path.name} exists already, overwrite?", default=True
+            ):
+                print("Okay, not saving anything then")
+                return
         print(f"[{amber_light}]Saving model at: [{orange}]{path}")
         torch.save(self.state_dict(), path)
 

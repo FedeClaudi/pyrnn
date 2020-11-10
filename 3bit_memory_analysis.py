@@ -2,7 +2,7 @@ import os
 import numpy as np
 import torch
 
-from pyrnn import CustomRNN
+from pyrnn import RNN
 from pyrnn.tasks.three_bit_memory import (
     ThreeBitDataset,
     is_win,
@@ -29,9 +29,7 @@ N = 2048 if EXTRACT else 512
 batch_size = 128 if EXTRACT else 32
 
 
-rnn = CustomRNN.load(
-    "3bit_memory.pt", n_units=128, input_size=3, output_size=3
-)
+rnn = RNN.load("3bit_memory.pt", n_units=128, input_size=3, output_size=3)
 
 dataloader = torch.utils.data.DataLoader(
     ThreeBitDataset(N, dataset_length=batch_size),

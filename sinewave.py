@@ -5,7 +5,7 @@ from vedo.colors import colorMap
 import numpy as np
 import torch
 
-from pyrnn import CustomRNN, plot_training_loss, plot_state_history_pca_3d
+from pyrnn import RNN, plot_training_loss, plot_state_history_pca_3d
 from pyrnn.tasks.sinewave import (
     SineWaveDataset,
     plot_predictions,
@@ -30,7 +30,7 @@ stop_loss = 0.0005  # 0.0005
 if FIT:
     dataset = SineWaveDataset(N, dataset_length=250)
 
-    rnn = CustomRNN(
+    rnn = RNN(
         input_size=1,
         output_size=1,
         autopses=True,
@@ -58,7 +58,7 @@ if FIT:
     plot_training_loss(loss_history)
     plt.show()
 else:
-    rnn = CustomRNN.load(
+    rnn = RNN.load(
         "sinewave.pt",
         n_units=n_units,
         input_size=1,
