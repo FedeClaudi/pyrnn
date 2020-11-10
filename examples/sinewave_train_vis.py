@@ -5,7 +5,7 @@ from vedo.colors import colorMap
 import numpy as np
 import torch
 
-from pyrnn import RNN, plot_training_loss, plot_state_history_pca_3d
+from pyrnn import RNN, plot_training_loss, render_state_history_pca_3d
 from pyrnn.tasks.sinewave import (
     SineWaveDataset,
     plot_predictions,
@@ -69,12 +69,15 @@ else:
 actors = []
 N = 500
 for freq in np.arange(0.1, 1, step=0.1):
+    raise NotImplementedError(
+        "This shouldnt work like this because youre applying pca to each trial"
+    )
     X = torch.ones(1, N, 1) * freq
     o, h = rnn.predict_with_history(X)
 
     color = colorMap(freq, name="viridis", vmin=0, vmax=1)
 
-    pca, actors = plot_state_history_pca_3d(
+    pca, actors = render_state_history_pca_3d(
         h, alpha=0.2, color=color, actors=actors, _show=False, mark_start=True
     )
 print("Ready")

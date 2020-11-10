@@ -26,7 +26,7 @@ class IntegratorDataset(data.Dataset):
     the data during training.
     """
 
-    speeds = [-0.2, 0.2]
+    speeds = [0.3]
 
     def __init__(
         self, sequence_length, dataset_length=1, k=2, switch_prob=0.05
@@ -37,13 +37,13 @@ class IntegratorDataset(data.Dataset):
         self.switch_prob = switch_prob
 
     def __len__(self):
-        return self.dataset_length
+        return len(self.speeds)
 
-    def _mk(self):
+    def _mk(self, item):
         seq_len = self.sequence_length
         x = np.zeros(seq_len)
 
-        speed = choice(self.speeds)
+        speed = self.speeds[item]
         for n in np.arange(seq_len):
             if rnd.rand() < self.switch_prob:
                 speed = choice(self.speeds)
@@ -62,23 +62,23 @@ class IntegratorDataset(data.Dataset):
             Y_batch = torch.zeros((seq_len, self.k))
 
             for m in range(self.k):
-                x, y = self._mk()
+                x, y = self._mk(item)
                 X_batch[:, m] = x
                 Y_batch[:, m] = y
 
             return X_batch, Y_batch
         else:
-            x, y = self._mk()
+            x, y = self._mk(item)
             return x.reshape(-1, 1), y.reshape(-1, 1)
 
 
-def make_batch(seq_len, **kwargs):
+def make_batch(seq_len, batch_size=1, **kwargs):
     """
     Return a single batch of given length
     """
     dataloader = torch.utils.data.DataLoader(
-        IntegratorDataset(seq_len, dataset_length=1, **kwargs),
-        batch_size=1,
+        IntegratorDataset(seq_len, dataset_length=batch_size, **kwargs),
+        batch_size=batch_size,
         num_workers=0 if is_win else 2,
         shuffle=True,
         worker_init_fn=lambda x: np.random.seed(),

@@ -13,9 +13,9 @@ from pyrnn.analysis import (
     list_fixed_points,
 )
 from pyrnn.plot import (
-    plot_fixed_points,
-    plot_fixed_points_connectivity_analysis,
-    plot_fixed_points_connectivity_graph,
+    render_fixed_points,
+    render_fixed_points_connectivity_analysis,
+    render_fixed_points_connectivity_graph,
 )
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
@@ -29,7 +29,7 @@ N = 2048 if EXTRACT else 512
 batch_size = 128 if EXTRACT else 32
 
 
-rnn = RNN.load("3bit_memory.pt", n_units=128, input_size=3, output_size=3)
+rnn = RNN.load("./3bit_memory.pt", n_units=128, input_size=3, output_size=3)
 
 dataloader = torch.utils.data.DataLoader(
     ThreeBitDataset(N, dataset_length=batch_size),
@@ -59,13 +59,13 @@ if EXTRACT:
         gamma=0.1,
     )
 
-    fp_finder.save_fixed_points("rnn.json")
+    fp_finder.save_fixed_points("./3bit_fps.json")
 
 # ----------------------------------- Plot ----------------------------------- #
-fps = FixedPoints.load_fixed_points("rnn.json")
+fps = FixedPoints.load_fixed_points("./3bit_fps.json")
 list_fixed_points(fps)
 if RENDER:
-    plot_fixed_points(h, fps, alpha=0.005, scale=1, sequential=False)
+    render_fixed_points(h, fps, alpha=0.005, scale=1, sequential=False)
 
 # ----------------------------- fps connectivity ----------------------------- #
 if CONNECTIVITY:
@@ -80,7 +80,7 @@ if CONNECTIVITY:
     )
 
 if RENDER and CONNECTIVITY:
-    plot_fixed_points_connectivity_analysis(
+    render_fixed_points_connectivity_analysis(
         h,
         fps,
         outcomes,
@@ -90,4 +90,4 @@ if RENDER and CONNECTIVITY:
         traj_radius=0.1,
     )
 
-    plot_fixed_points_connectivity_graph(h, fps, graph, alpha=0.005)
+    render_fixed_points_connectivity_graph(h, fps, graph, alpha=0.005)
