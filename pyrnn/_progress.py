@@ -124,7 +124,6 @@ train_progress = Progress(
     "•",
     LossColumn(),
     LearningRateColumn(),
-    transient=True,
 )
 
 # Progress bar used for finding fixed points
@@ -137,5 +136,4 @@ fixed_points_progress = Progress(
     "•",
     TimeRemainingColumn(),
     TimeElapsedColumn(),
-    transient=True,
 )

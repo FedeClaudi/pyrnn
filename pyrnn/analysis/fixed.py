@@ -8,7 +8,7 @@ from pyinspect import Report
 
 from pyrnn._progress import fixed_points_progress
 from pyrnn._io import save_json, load_json
-from pyrnn._utils import flatten_h
+from pyrnn._utils import flatten_h, GracefulInterruptHandler
 
 # named tuple storing eigen modes info
 eig_mode = namedtuple("eigmode", "stable, eigv, eigvec")
@@ -262,38 +262,42 @@ class FixedPoints(object):
                 step width is reduced by a factor of gamma
         """
         # loop over inputs
-        for n_cn, constant_input in enumerate(constant_inputs):
-            gamma = self.gamma
+        with GracefulInterruptHandler() as handler:
+            for n_cn, constant_input in enumerate(constant_inputs):
+                gamma = self.gamma
 
-            h = torch.from_numpy(hid.astype(np.float32)).reshape(1, 1, -1)
-            h.requires_grad = True
-            h.retain_grad()
+                h = torch.from_numpy(hid.astype(np.float32)).reshape(1, 1, -1)
+                h.requires_grad = True
+                h.retain_grad()
 
-            # loop over iterations
-            for epoch in range(max_iters):
-                # step RNN
-                _, _h = self.model(constant_input, h)
+                # loop over iterations
+                for epoch in range(max_iters):
+                    # step RNN
+                    _, _h = self.model(constant_input, h)
 
-                # Compute
-                q = torch.norm(h - _h)
+                    # Compute
+                    q = torch.norm(h - _h)
 
-                # Step
-                if q < self.speed_tol:
-                    # found a FP
-                    return h.detach().numpy().ravel()
-                else:
-                    # step in the direction of decreasing speed
-                    q.backward()
-                    if epoch % lr_decay_epoch == 0 and epoch > 0:
-                        gamma *= 0.5
+                    # Step
+                    if q < self.speed_tol:
+                        # found a FP
+                        return h.detach().numpy().ravel()
+                    else:
+                        # step in the direction of decreasing speed
+                        q.backward()
+                        if epoch % lr_decay_epoch == 0 and epoch > 0:
+                            gamma *= 0.5
 
-                    # update state
-                    h = h - gamma * h.grad
-                    h.retain_grad()
+                        # update state
+                        h = h - gamma * h.grad
+                        h.retain_grad()
 
-                progress.update(
-                    tid, completed=epoch * (n_cn + 1), fpspeed=q.item()
-                )
+                    if handler.interrupted:
+                        return False
+
+                    progress.update(
+                        tid, completed=epoch * (n_cn + 1), fpspeed=q.item()
+                    )
         return None
 
     def find_fixed_points(
@@ -344,36 +348,42 @@ class FixedPoints(object):
             )
 
             # loop over initial conditions
-            for nhid, hid in enumerate(initial_conditions):
-                progress.update(
-                    main_tid,
-                    completed=nhid,
-                    fpspeed=None,
-                )
+            with GracefulInterruptHandler() as h:
+                for nhid, hid in enumerate(initial_conditions):
+                    progress.update(
+                        main_tid,
+                        completed=nhid,
+                        fpspeed=None,
+                    )
 
-                # Add a second progress bar for each initial conditon
-                tid = progress.add_task(
-                    f"[{amber_light}] Init.cond.: {nhid}/{n_initial_conditions} | ({len(fixed_points)}/{max_fixed_points})",
-                    start=True,
-                    total=max_iters * len(constant_inputs),
-                    fpspeed=None,
-                )
+                    # Add a second progress bar for each initial conditon
+                    tid = progress.add_task(
+                        f"[{amber_light}] Init.cond.: {nhid}/{n_initial_conditions} | ({len(fixed_points)}/{max_fixed_points})",
+                        start=True,
+                        total=max_iters * len(constant_inputs),
+                        fpspeed=None,
+                    )
 
-                # Run initial condition to find a FP
-                fp = self._run_initial_condition(
-                    hid,
-                    constant_inputs,
-                    progress,
-                    tid,
-                    max_iters,
-                    lr_decay_epoch,
-                )
-                if fp is not None:
-                    fixed_points = self._append_fixed_point(fixed_points, fp)
+                    # Run initial condition to find a FP
+                    fp = self._run_initial_condition(
+                        hid,
+                        constant_inputs,
+                        progress,
+                        tid,
+                        max_iters,
+                        lr_decay_epoch,
+                    )
+                    if fp is False or h.interrupted:
+                        break
 
-                progress.remove_task(tid)
-                if len(fixed_points) >= max_fixed_points:
-                    break
+                    if fp is not None:
+                        fixed_points = self._append_fixed_point(
+                            fixed_points, fp
+                        )
+
+                    progress.remove_task(tid)
+                    if len(fixed_points) >= max_fixed_points:
+                        break
 
         # Create instance of FixedPoint for each fixed point state found so far
         print(

@@ -26,7 +26,7 @@ class IntegratorDataset(data.Dataset):
     the data during training.
     """
 
-    speeds = [-0.2, 0.2]
+    speeds = [-0.3, -0.2, -0.1, 0.1, 0.2, 0.3]
 
     def __init__(self, sequence_length, dataset_length=1, k=2):
         self.sequence_length = sequence_length

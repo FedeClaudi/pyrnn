@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import os
 from vedo.colors import colorMap
+from vedo import show
 
 from pyrnn import CustomRNN, plot_training_loss, plot_state_history_pca_3d
 from pyrnn.tasks.integrator import (
@@ -12,16 +13,16 @@ from pyrnn.tasks.integrator import (
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 # ---------------------------------- Params ---------------------------------- #
-FIT = False
+FIT = True
 
 K = 1
 n_units = 64
-N = 20
+N = 24
 batch_size = 64
 epochs = 20000  # 1024
-lr_milestones = None
+lr_milestones = [10000]
 lr = 0.001
-stop_loss = 0.001
+stop_loss = 0.0005
 
 # ------------------------------- Fit/load RNN ------------------------------- #
 if FIT:
@@ -34,8 +35,6 @@ if FIT:
         dale_ratio=None,
         n_units=n_units,
     )
-
-    rnn.save_params("integrator.json")
 
     loss_history = rnn.fit(
         dataset,
@@ -61,12 +60,19 @@ else:
 
 # ------------------------------- Activity PCA ------------------------------- #
 actors = []
-N = 15000
-X, Y = make_batch(N, k=K)
-o, h = rnn.predict_with_history(X)
+N = 1500
+for i in range(5):
+    X, Y = make_batch(N, k=K)
+    o, h = rnn.predict_with_history(X)
 
-
-color = colorMap(X[0, :, 0], name="bwr", vmin=-0.3, vmax=0.3)
-plot_state_history_pca_3d(
-    h, alpha=0.01, actors=actors, mark_start=False, color=color
-)
+    color = colorMap(X[0, :, 0], name="bwr", vmin=-0.3, vmax=0.3)
+    _, actors = plot_state_history_pca_3d(
+        h,
+        alpha=0.01,
+        actors=actors,
+        mark_start=False,
+        color=color,
+        _show=False,
+    )
+print("render ready")
+show(*actors)
