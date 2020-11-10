@@ -5,7 +5,7 @@ from ._utils import npify, torchify
 from ._rnn import RNNBase
 
 
-class CustomRNN(RNNBase):
+class RNN(RNNBase):
     r"""
     Cusom RNN class. Unlike RNN above it doesn't use
     pytorch's RNN class but builds similar functionality
@@ -138,7 +138,7 @@ class CustomRNN(RNNBase):
         return out.permute(1, 0, 2), h
 
 
-class RNN(RNNBase):
+class TorchRNN(RNNBase):
     r"""
     Implements a basic RNN using the RNN class from pytorch and
     a dense linear layer for output.
