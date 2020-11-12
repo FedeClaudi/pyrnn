@@ -1,7 +1,12 @@
 import matplotlib.pyplot as plt
 import os
 
-from pyrnn import RNN, plot_training_loss
+# import sys
+
+# sys.path.append("./")
+
+from pyrnn import RNN
+from pyrnn.plot import plot_training_loss
 from pyrnn.tasks.three_bit_memory import (
     ThreeBitDataset,
     plot_predictions,
@@ -12,8 +17,8 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 # ---------------------------------- Params ---------------------------------- #
 FIT = True
 
-n_units = 128
-N = 10240
+n_units = 64
+N = 100
 batch_size = 256
 epochs = 700
 lr_milestones = [500, 800]
@@ -26,8 +31,8 @@ dataset = ThreeBitDataset(N, dataset_length=8)
 rnn = RNN(
     input_size=3,
     output_size=3,
-    autopses=True,
-    dale_ratio=None,
+    autopses=False,
+    dale_ratio=0.8,
     n_units=n_units,
 )
 

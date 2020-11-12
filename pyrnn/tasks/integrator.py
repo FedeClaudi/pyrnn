@@ -26,7 +26,7 @@ class IntegratorDataset(data.Dataset):
     the data during training.
     """
 
-    speeds = [0.3]
+    speeds = [-0.3, 0.3]
 
     def __init__(
         self, sequence_length, dataset_length=1, k=2, switch_prob=0.05
@@ -37,13 +37,13 @@ class IntegratorDataset(data.Dataset):
         self.switch_prob = switch_prob
 
     def __len__(self):
-        return len(self.speeds)
+        return self.dataset_length
 
     def _mk(self, item):
         seq_len = self.sequence_length
         x = np.zeros(seq_len)
 
-        speed = self.speeds[item]
+        speed = choice(self.speeds)
         for n in np.arange(seq_len):
             if rnd.rand() < self.switch_prob:
                 speed = choice(self.speeds)

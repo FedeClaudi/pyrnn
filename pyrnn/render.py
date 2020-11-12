@@ -66,6 +66,7 @@ def render_state_history_pca_3d(
     actors=None,
     mark_start=False,
     axes=0,
+    color_by_trial=False,
 ):
     """
     Fits a PCA to high dim hidden state history
@@ -86,20 +87,28 @@ def render_state_history_pca_3d(
         actors (list): list of actors
     """
     hh = flatten_h(hidden_history)
+    actors = actors or []
 
     pca = PCA(n_components=3).fit(hh)
 
-    pc = pca.transform(hh)
-    points = points_from_pc(pc)
+    for trial in np.arange(hidden_history.shape[0]):
+        pc = pca.transform(hidden_history[trial, :, :])
+        points = points_from_pc(pc)
 
-    actors = actors or []
-    actors.append(Tube([p[0] for p in points], alpha=alpha, c=color, r=lw))
+        if color_by_trial:
+            col = color[trial]
+        else:
+            col = color
 
-    if mark_start:
-        try:
-            actors.append(Sphere(points[0][0], r=0.15, c=color))
-        except Exception:
-            actors.append(Sphere(points[0][0], r=0.15, c=color[0]))
+        actors.append(Tube([p[0] for p in points], alpha=alpha, c=col, r=lw))
+        # actors.extend([Sphere(p[0]) for p in points])
+        # actors.append(Spheres([p[0] for p in points], c=col, r=lw))
+
+        if mark_start:
+            try:
+                actors.append(Sphere(points[0][0], r=0.15, c=col))
+            except Exception:
+                actors.append(Sphere(points[0][0], r=0.15, c=col[0]))
 
     render(actors, _show=_show, axes=axes)
     return pca, actors
@@ -148,26 +157,24 @@ def render_fixed_points(
 
         # loop over fixed ponts
         for fp in fixed_points:
+            if fp.n_unstable_modes != n and sequential:
+                continue
             # Get position
             pos = t(fp.h.reshape(1, -1))[0, :]
 
             # Get color
-            n_unstable = fp.n_unstable_modes
-            if n_unstable != n and sequential:
-                continue
-
-            color = get_fp_color(n_unstable)
+            color = get_fp_color(fp.n_unstable_modes)
 
             # plot unstable modes
             for stable, eigval, eigvec in fp.eigenmodes:
                 if not stable:
-                    delta = eigval * -eigvec * scale
-                    p0 = pos - t(np.real(delta).reshape(1, -1))
-                    p1 = pos + t(np.real(delta).reshape(1, -1))
+                    delta = t((eigval * -eigvec).reshape(1, -1))[0]
+                    p0 = pos - (scale * delta)
+                    p1 = pos + (scale * delta)
 
                     vis_actors.append(
                         Tube(
-                            [p1.ravel(), p0.ravel()],
+                            [p1, p0],
                             c=color,
                             r=fpoint_radius,
                             alpha=1,

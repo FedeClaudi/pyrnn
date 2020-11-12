@@ -1,6 +1,5 @@
 import os
 from vedo.colors import colorMap
-import numpy as np
 
 # import sys
 
@@ -28,15 +27,19 @@ rnn = RNN.load(
 )
 
 # ------------------------------- Activity PCA ------------------------------- #
-N = 1200
-X, Y = make_batch(N, batch_size=4, k=K, switch_prob=-1.0)
+N = 2000
+X, Y = make_batch(N, batch_size=2, k=K, switch_prob=0.1)
 o, h = rnn.predict_with_history(X)
 
-color = colorMap(np.arange(N), name="bwr", vmin=-1, vmax=1)
+
+col = colorMap(X[0, :, 0], name="bwr", vmin=-0.3, vmax=0.3)
+color = [col, col]
 render_state_history_pca_3d(
     h,
-    lw=0.4,
+    lw=0.2,
     alpha=0.01,
     mark_start=False,
     _show=True,
+    color=color,
+    color_by_trial=True,
 )

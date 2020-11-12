@@ -21,11 +21,11 @@ N = 20
 batch_size = 128
 epochs = 3000  # 1024
 lr_milestones = [10000]
-lr = 0.001
+lr = 0.0005
 stop_loss = 0.00025
 
 # ------------------------------- Fit/load RNN ------------------------------- #
-dataset = IntegratorDataset(N, dataset_length=200, k=K, switch_prob=0)
+dataset = IntegratorDataset(N, dataset_length=400, k=K, switch_prob=0.01)
 
 rnn = RNN(
     input_size=K,

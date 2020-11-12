@@ -2,17 +2,22 @@ import os
 import numpy as np
 import torch
 
+# import sys
+
+# sys.path.append("./")
+
 from pyrnn import RNN
 from pyrnn.tasks.three_bit_memory import (
     ThreeBitDataset,
     is_win,
+    make_batch,
 )
 from pyrnn.analysis import (
     FixedPoints,
     FixedPointsConnectivity,
     list_fixed_points,
 )
-from pyrnn.plot import (
+from pyrnn.render import (
     render_fixed_points,
     render_fixed_points_connectivity_analysis,
     render_fixed_points_connectivity_graph,
@@ -25,29 +30,28 @@ EXTRACT = False
 CONNECTIVITY = True
 RENDER = True
 
-N = 2048 if EXTRACT else 512
-batch_size = 128 if EXTRACT else 32
-
-
-rnn = RNN.load("./3bit_memory.pt", n_units=128, input_size=3, output_size=3)
-
-dataloader = torch.utils.data.DataLoader(
-    ThreeBitDataset(N, dataset_length=batch_size),
-    batch_size=batch_size,
-    num_workers=0 if is_win else 2,
-    shuffle=True,
-    worker_init_fn=lambda x: np.random.seed(),
-)
-X, Y = list(dataloader)[0]
-o, h = rnn.predict_with_history(X)
+N = 2048
+batch_size = 128
 
 constant_inputs = [
     torch.from_numpy(np.array([0, 0, 0]).astype(np.float32)).reshape(1, 1, -1),
 ]
 
+rnn = RNN.load("./3bit_memory.pt", n_units=64, input_size=3, output_size=3)
+
 # ----------------------------- Find fixed points ---------------------------- #
 if EXTRACT:
-    fp_finder = FixedPoints(rnn, speed_tol=2e-02, noise_scale=2)
+    dataloader = torch.utils.data.DataLoader(
+        ThreeBitDataset(N, dataset_length=batch_size),
+        batch_size=batch_size,
+        num_workers=0 if is_win else 2,
+        shuffle=True,
+        worker_init_fn=lambda x: np.random.seed(),
+    )
+    X, Y = list(dataloader)[0]
+    o, h = rnn.predict_with_history(X)
+
+    fp_finder = FixedPoints(rnn, speed_tol=1e-02, noise_scale=2)
 
     fp_finder.find_fixed_points(
         h,
@@ -65,7 +69,12 @@ if EXTRACT:
 fps = FixedPoints.load_fixed_points("./3bit_fps.json")
 list_fixed_points(fps)
 if RENDER:
-    render_fixed_points(h, fps, alpha=0.005, scale=1, sequential=False)
+    X, Y = make_batch(6000)
+    _, _h = rnn.predict_with_history(X)
+
+    render_fixed_points(
+        _h, fps, alpha=0.005, scale=1, lw=0.4, sequential=False
+    )
 
 # ----------------------------- fps connectivity ----------------------------- #
 if CONNECTIVITY:

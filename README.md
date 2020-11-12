@@ -70,6 +70,14 @@ This is done by initializing the network at each fixed point (with noise and rep
 This information is then used to construct the directed graph.
 
 
+![](imgs/integrator.png)
+Dynamics from two trials in the integrator task. What you're seeing is the 3d render of the first 3 PC components of the hidden state dynamics, color coded by the input signal (blue = -3, red=+3).
+The main circle corresponds to the dynamics for the speed signalled by the input at the start of the trial, the smaller circle is occupied when the speed signal is changed. 
+
+![](imgs/3bit.png)
+Dynamics and fixed points of the hidden state of a RNN trained on the 3bit flifp flop memory task. 
+The gray trace shows the trajectory of the hidden state in PCA space, sphere indicate fixed points colorcoded by the number of unstable modes (shown) of each fixed pont.
+
 ## Visualization
 `pyrnn` provides method for creating plots of activity as well as 3d interactive renderings (using `vedo` [4]).
 The renderings in particular can be used to visualise the results of the Dynamics Analysis.
