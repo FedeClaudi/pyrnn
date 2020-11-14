@@ -7,8 +7,8 @@ import sys
 sys.path.append("./")
 
 from pyrnn import RNN
-from pyrnn.tasks.three_bit_memory import (
-    ThreeBitDataset,
+from pyrnn.tasks.integrator import (
+    IntegratorDataset,
     is_win,
     make_batch,
 )
@@ -30,17 +30,25 @@ EXTRACT = False
 CONNECTIVITY = True
 RENDER = True
 
-N = 2048
-batch_size = 128
+N = 200
+batch_size = 64
+
 
 constant_inputs = [
-    torch.from_numpy(np.array([0, 0, 0]).astype(np.float32)).reshape(1, 1, -1),
+    torch.from_numpy(np.array([0]).astype(np.float32)).reshape(1, 1, -1),
 ]
 
-rnn = RNN.load("./3bit_memory.pt", n_units=64, input_size=3, output_size=3)
+K = 1
+n_units = 128
+rnn = RNN.load(
+    "./integrator.pt",
+    n_units=n_units,
+    input_size=K,
+    output_size=K,
+)
 
 dataloader = torch.utils.data.DataLoader(
-    ThreeBitDataset(N, dataset_length=batch_size),
+    IntegratorDataset(N, dataset_length=batch_size, k=K, switch_prob=0.01),
     batch_size=batch_size,
     num_workers=0 if is_win else 2,
     shuffle=True,
@@ -60,21 +68,21 @@ if EXTRACT:
         n_initial_conditions=150,
         max_iters=9000,
         lr_decay_epoch=1500,
-        max_fixed_points=27,
+        max_fixed_points=2,
         gamma=0.1,
     )
 
-    fp_finder.save_fixed_points("./3bit_fps.json")
+    fp_finder.save_fixed_points("./integrator_fps.json")
 
 # ----------------------------------- Plot ----------------------------------- #
-fps = FixedPoints.load_fixed_points("./3bit_fps.json")
+fps = FixedPoints.load_fixed_points("./integrator_fps.json")
 list_fixed_points(fps)
 if RENDER:
-    X, Y = make_batch(6000)
+    X, Y = make_batch(1000, batch_size=3, k=K)
     _, _h = rnn.predict_with_history(X)
 
     render_fixed_points(
-        _h, fps, alpha=0.005, scale=1, lw=0.2, sequential=False
+        _h, fps, alpha=0.005, scale=1, lw=0.4, sequential=False
     )
 
 # ----------------------------- fps connectivity ----------------------------- #
@@ -82,8 +90,8 @@ if CONNECTIVITY:
     fps_connectivity = FixedPointsConnectivity(
         rnn,
         fps,
-        n_initial_conditions_per_fp=128,
-        noise_scale=0.1,
+        n_initial_conditions_per_fp=24,
+        noise_scale=0.5,
     )
     outcomes, graph = fps_connectivity.get_connectivity(
         constant_inputs[0], max_iters=1024
@@ -95,10 +103,10 @@ if RENDER and CONNECTIVITY:
         fps,
         outcomes,
         alpha=0.005,
-        sequential=True,
-        traj_alpha=0.05,
-        traj_radius=0.08,
-        initial_conditions_radius=0.08,
+        sequential=False,
+        traj_alpha=0.8,
+        traj_radius=0.3,
+        initial_conditions_radius=0.3,
     )
 
     render_fixed_points_connectivity_graph(_h, fps, graph, alpha=0.005)

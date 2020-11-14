@@ -53,6 +53,8 @@ class IntegratorDataset(data.Dataset):
         y = np.cumsum(x)
         phases = (np.arctan2(np.sin(y), np.cos(y))) / np.pi
 
+        # add noise
+        x += rnd.normal(scale=0.1, size=len(x))
         return torchify(x), torchify(phases)
 
     def __getitem__(self, item):

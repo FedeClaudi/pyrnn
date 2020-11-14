@@ -8,7 +8,7 @@ from pyinspect import Report
 
 from pyrnn._progress import fixed_points_progress
 from pyrnn._io import save_json, load_json
-from pyrnn._utils import flatten_h, GracefulInterruptHandler
+from pyrnn._utils import flatten_h, GracefulInterruptHandler, torchify
 
 # named tuple storing eigen modes info
 eig_mode = namedtuple("eigmode", "stable, eigv, eigvec")
@@ -104,7 +104,7 @@ class FixedPoint(object):
         jacobian = torch.zeros(n_units, n_units)
 
         # initialize hidden state
-        h = torch.from_numpy(self.h.astype(np.float32)).reshape(1, 1, -1)
+        h = torchify(self.h)
         h.requires_grad = True
 
         _o, _h = self.model(self.constant_input, h)

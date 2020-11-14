@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 import os
 
-# import sys
+import sys
 
-# sys.path.append("./")
+sys.path.append("./")
 
 from pyrnn import RNN
 from pyrnn.plot import plot_training_loss
@@ -15,13 +15,13 @@ from pyrnn.tasks.integrator import (
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 # ---------------------------------- Params ---------------------------------- #
-K = 1
-n_units = 128
-N = 20
+K = 2
+n_units = 64
+N = 16
 batch_size = 128
-epochs = 3000  # 1024
-lr_milestones = [10000]
-lr = 0.0005
+epochs = 5000  # 1024
+lr_milestones = [1000, 3000]
+lr = 0.005
 stop_loss = 0.00025
 
 # ------------------------------- Fit/load RNN ------------------------------- #
@@ -47,7 +47,7 @@ loss_history = rnn.fit(
     report_path="integrator.txt",
     stop_loss=stop_loss,
 )
-rnn.save("integrator.pt")
+rnn.save("integrator2.pt")
 
 plot_predictions(rnn, N, batch_size, k=K)
 plot_training_loss(loss_history)

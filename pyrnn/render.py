@@ -226,8 +226,6 @@ def render_fixed_points_connectivity_analysis(
         pca (PCA): PCA model fit to hidden history
         actors (list): list of actors
     """
-    hidden_history = flatten_h(hidden_history)
-
     pca, actors = render_fixed_points(
         hidden_history, fixed_points, _show=False, **kwargs
     )
