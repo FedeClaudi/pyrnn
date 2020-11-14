@@ -137,6 +137,11 @@ class FixedPoint(object):
         # Get overall stability (all modes stable)
         self.is_stable = np.all(np.abs(eigv) < 1.0)
 
+        # Sort by eigv
+        sort_idx = np.argsort(eigv)
+        eigv = eigv[sort_idx]
+        eigvecs = eigvecs[:, sort_idx]
+
         # Get stability over each mode
         self.eigenmodes = []  # holds stable eigenvecs
         for e_val, e_vec in zip(eigv, eigvecs.T):

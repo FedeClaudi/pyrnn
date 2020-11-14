@@ -20,12 +20,15 @@ n_units = 64
 N = 16
 batch_size = 128
 epochs = 5000  # 1024
-lr_milestones = [1000, 3000]
+dataset_length = 400
+lr_milestones = [x * dataset_length for x in [1000, 3000]]
 lr = 0.005
 stop_loss = 0.00025
 
 # ------------------------------- Fit/load RNN ------------------------------- #
-dataset = IntegratorDataset(N, dataset_length=400, k=K, switch_prob=0.01)
+dataset = IntegratorDataset(
+    N, dataset_length=dataset_length, k=K, switch_prob=0.01
+)
 
 rnn = RNN(
     input_size=K,

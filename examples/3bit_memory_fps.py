@@ -27,7 +27,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 # ----------------------------------- setup ---------------------------------- #
 EXTRACT = False
-CONNECTIVITY = True
+CONNECTIVITY = False
 RENDER = True
 
 N = 2048
