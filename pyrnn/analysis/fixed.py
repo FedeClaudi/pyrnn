@@ -154,7 +154,7 @@ class FixedPoint(object):
                 stable = False
 
             # store the stability, eigenvalue and eigenvectors
-            self.eigenmodes.append(eig_mode(stable, eigv_mag, np.real(e_vec)))
+            self.eigenmodes.append(eig_mode(stable, e_val, np.real(e_vec)))
 
         # count number of untable modes
         self.n_unstable_modes = np.sum(

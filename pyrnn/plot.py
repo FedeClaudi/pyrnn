@@ -1,11 +1,78 @@
 import matplotlib.pyplot as plt
 from myterial import salmon
 from sklearn.decomposition import PCA
+from vedo.colors import colorMap
 import networkx as nx
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import numpy as np
 
 from ._plot import clean_axes
 from ._utils import npify, flatten_h
+
+
+def plot_fixed_points_eigenvalues(fps, only_dominant=True):
+    """
+    Plots the eigenvalues of the jacobian an each
+    fixed point in the complex plane.
+
+    :param fps: list of FixedPoint objects
+    :param only_dominant: bool, if true only the
+        eigenvalue with largest magnitude for each FixedPoint
+        is shown
+    """
+    f, ax = plt.subplots(figsize=(10, 10))
+
+    # Plot unit circle
+    t = np.linspace(0, 2 * np.pi, 360)
+    ax.plot(np.cos(t), np.sin(t), lw=2, ls="--", color=[0.6, 0.6, 0.6])
+
+    # Plot fixed points
+    for fp in fps:
+        evals = [emode.eigv for emode in fp.eigenmodes]
+        mags = [np.abs(eval) for eval in evals]
+        evals = np.array(evals)[np.argsort(mags)][::-1]
+
+        colors = colorMap(
+            np.array(mags)[np.argsort(mags)][::-1],
+            name="bwr",
+            vmin=0,
+            vmax=1.5,
+        )
+        reals = np.real(evals)
+        imgs = np.imag(evals)
+
+        if only_dominant:
+            ax.scatter(
+                reals[0],
+                imgs[0],
+                color=colors[0],
+                s=100,
+                alpha=0.8,
+                lw=1,
+                edgecolors=[0.3, 0.3, 0.3],
+            )
+        else:
+            ax.scatter(
+                reals,
+                imgs,
+                c=colors,
+                s=100,
+                alpha=0.8,
+                lw=1,
+                edgecolors=[0.3, 0.3, 0.3],
+            )
+
+    # Clean up figure
+    clean_axes(f)
+    ax.spines["bottom"].set_position("zero")
+    ax.spines["left"].set_position("zero")
+    ax.axis("equal")
+    ax.set(xticks=[-1.5, 1.5], yticks=[-1.5, 1.5])
+    ax.set_xlabel("$\\Re$", fontsize=24, color=[0.3, 0.3, 0.3])
+    ax.xaxis.set_label_coords(1, 0.48)
+    ax.set_ylabel("$\\Im$", fontsize=24, color=[0.3, 0.3, 0.3])
+    ax.yaxis.set_label_coords(0.4, 1)
+    return f
 
 
 def plot_training_loss(loss_history):
