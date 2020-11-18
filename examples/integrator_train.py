@@ -20,8 +20,8 @@ n_units = 64
 N = 16
 batch_size = 128
 epochs = 5000  # 1024
-dataset_length = 400
-lr_milestones = [x * dataset_length for x in [1000, 3000]]
+dataset_length = 200
+lr_milestones = None  # [x * dataset_length for x in [1000, 3000]]
 lr = 0.005
 stop_loss = 0.00025
 

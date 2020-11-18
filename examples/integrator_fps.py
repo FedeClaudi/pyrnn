@@ -22,26 +22,26 @@ from pyrnn.render import (
     render_fixed_points_connectivity_analysis,
     render_fixed_points_connectivity_graph,
 )
+from pyrnn._utils import torchify
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 # ----------------------------------- setup ---------------------------------- #
-EXTRACT = False
+EXTRACT = True
 CONNECTIVITY = True
 RENDER = True
 
 N = 200
 batch_size = 64
-
+K = 2
+n_units = 64
 
 constant_inputs = [
-    torch.from_numpy(np.array([0]).astype(np.float32)).reshape(1, 1, -1),
+    torchify(np.zeros(K)).reshape(1, 1, -1),
 ]
 
-K = 1
-n_units = 128
 rnn = RNN.load(
-    "./integrator.pt",
+    "./integrator2.pt",
     n_units=n_units,
     input_size=K,
     output_size=K,
@@ -60,7 +60,7 @@ X, Y = list(dataloader)[0]
 if EXTRACT:
     o, h = rnn.predict_with_history(X)
 
-    fp_finder = FixedPoints(rnn, speed_tol=1e-02, noise_scale=2)
+    fp_finder = FixedPoints(rnn, speed_tol=8e-02, noise_scale=2)
 
     fp_finder.find_fixed_points(
         h,

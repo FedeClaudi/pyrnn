@@ -18,6 +18,7 @@ class RNN(RNNBase):
         o_{t} = W_{out} h_{t}
 
     """
+    activation = nn.Tanh()
 
     def __init__(
         self,
@@ -76,9 +77,6 @@ class RNN(RNNBase):
             if not trainable:
                 for p in layer.parameters():
                     p.requires_grad = False
-
-        # Get activation function
-        self.activation = nn.Tanh()
 
         # Build
         self.build()
