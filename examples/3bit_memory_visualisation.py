@@ -1,8 +1,8 @@
 import os
 
-# import sys
+import sys
 
-# sys.path.append("./")
+sys.path.append("./")
 
 from pyrnn import RNN
 from pyrnn.render import render_state_history_pca_3d

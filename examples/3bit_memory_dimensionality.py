@@ -20,6 +20,6 @@ X, Y = make_batch(N)
 o, h = rnn.predict_with_history(X)
 
 
-get_n_components_with_pca(h)
+get_n_components_with_pca(h, is_hidden=True)
 
 plt.show()

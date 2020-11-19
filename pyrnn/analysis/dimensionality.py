@@ -6,24 +6,28 @@ from pyrnn._utils import flatten_h
 from pyrnn._plot import clean_axes
 
 
-def get_n_components_with_pca(h, variance_th=0.85, plot=True):
+def get_n_components_with_pca(arr, is_hidden=False, variance_th=0.85, plot=True):
     """
     Uses PCA and looks at the variance explained
     by each principal component and looks at how
     many components are needed to reach a given threshold
 
     Arguments:
-        h: tensor with history of hidden state (from rnn.predict_with_history)
+        arr: 2D np array or tensor with history of hidden state (from rnn.predict_with_history)
+        is_hidden: bool. If arr is a history of hidden state this should be set to true
         variance_th: float, default .9. The dimensionality of the dynamics
             is given by the number of components necessary to explain this
             fraction of the variance. Should be in range [0, 1]
         plot: bool, default True. If true a plot is made to show
             the fraction of variance explained
     """
-    n_units = h.shape[-1]
+    n_units = arr.shape[-1]
+
+    if is_hidden:
+        arr = flatten_h(arr)
 
     # Fit PCA and get number of components to reach variance
-    pca = PCA(n_components=n_units).fit(flatten_h(h))
+    pca = PCA(n_components=n_units).fit(arr)
     explained = np.cumsum(pca.explained_variance_ratio_)
     above = np.where(explained > variance_th)[0][0]
     at_above = explained[above]

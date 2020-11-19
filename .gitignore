@@ -3,7 +3,7 @@
 *.pt
 *.json
 *.txt
-
+.google-cookie
 workspace.py
 # Byte-compiled / optimized / DLL files
 __pycache__/

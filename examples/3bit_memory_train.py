@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 import os
 
-# import sys
+import sys
 
-# sys.path.append("./")
+sys.path.append("./")
 
 from pyrnn import RNN
 from pyrnn.plot import plot_training_loss
@@ -18,11 +18,11 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 FIT = True
 
 n_units = 64
-N = 100
+N = 1024
 batch_size = 256
 epochs = 700
-lr_milestones = [500, 800]
-lr = 0.005
+lr_milestones = [100, 500, 800]
+lr = 0.01
 
 # ---------------------------------- Fit RNN --------------------------------- #
 

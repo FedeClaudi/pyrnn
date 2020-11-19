@@ -99,7 +99,7 @@ def plot_recurrent_weights(model):
     """
     f, ax = plt.subplots(figsize=(10, 10))
 
-    img = ax.imshow(npify(model.recurrent_weights, flatten=False), cmap="bwr")
+    img = ax.imshow(npify(model.get_recurrent_weights(), flatten=False), cmap="bwr")
 
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.05)
