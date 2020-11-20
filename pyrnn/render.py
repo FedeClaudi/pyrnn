@@ -65,6 +65,7 @@ def render_state_history_pca_3d(
     _show=True,
     actors=None,
     mark_start=False,
+    start_color='k',
     axes=0,
     color_by_trial=False,
 ):
@@ -101,14 +102,10 @@ def render_state_history_pca_3d(
             col = color
 
         actors.append(Tube([p[0] for p in points], alpha=alpha, c=col, r=lw))
-        # actors.extend([Sphere(p[0]) for p in points])
-        # actors.append(Spheres([p[0] for p in points], c=col, r=lw))
 
         if mark_start:
-            try:
-                actors.append(Sphere(points[0][0], r=0.15, c=col))
-            except Exception:
-                actors.append(Sphere(points[0][0], r=0.15, c=col[0]))
+            actors.append(Sphere(points[0][0], r=0.15, c=start_color))
+
 
     render(actors, _show=_show, axes=axes)
     return pca, actors

@@ -18,15 +18,15 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 FIT = True
 
 n_units = 64
-N = 1024
+N = 64
 batch_size = 256
 epochs = 700
-lr_milestones = [100, 500, 800]
-lr = 0.01
+lr_milestones = [500, 800]
+lr = 0.005
 
 # ---------------------------------- Fit RNN --------------------------------- #
 
-dataset = ThreeBitDataset(N, dataset_length=8)
+dataset = ThreeBitDataset(N, dataset_length=64)
 
 rnn = RNN(
     input_size=3,
@@ -34,6 +34,7 @@ rnn = RNN(
     autopses=False,
     dale_ratio=0.8,
     n_units=n_units,
+    on_gpu=False
 )
 
 loss_history = rnn.fit(
@@ -45,7 +46,7 @@ loss_history = rnn.fit(
     input_length=N,
     lr_milestones=lr_milestones,
     l2norm=0,
-    report_path="./3bit_memory.txt",
+    # report_path="./3bit_memory.txt",
 )
 rnn.save("./3bit_memory.pt")
 

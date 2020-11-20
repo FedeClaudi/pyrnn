@@ -1,20 +1,21 @@
 import torch
 import torch.nn as nn
 from rich import print
-from rich.table import Table
 from rich.prompt import Confirm
-from myterial import amber_light, orange, salmon
+from myterial import amber_light, orange
 import numpy as np
 import sys
 from pathlib import Path
 import pyinspect as pi
+# from torch.nn.utils.rnn import pad_packed_sequence
+
 
 from ._progress import train_progress, base_progress
 from ._utils import npify, GracefulInterruptHandler
 from ._io import load_json, save_json
+from ._trainer import Trainer
 
 
-is_win = sys.platform == "win32"
 
 # --------------------------- Placeholder functions -------------------------- #
 
@@ -115,7 +116,7 @@ class RecurrentWeightsInitializer(object):
 # ------------------------------ Base RNN class ------------------------------ #
 
 
-class RNNBase(nn.Module):
+class RNNBase(nn.Module, Trainer):
     """
     Base RNN class, implements method
     to save/load RNNs, apply constraints on
@@ -133,6 +134,7 @@ class RNNBase(nn.Module):
         dale_ratio=None,
         autopses=True,
         connectivity=None,
+        on_gpu=False,
     ):
         """
         Base RNN class, implements method
@@ -150,8 +152,13 @@ class RNNBase(nn.Module):
             autopses (bool): pass False to remove autopses from
                 recurrent weights
             connectivity (): not implemented yet
+            on_gpu (bool): if true computation is carried out on a GPU
         """
         super(RNNBase, self).__init__()
+        Trainer.__init__(self)
+
+
+        self.on_gpu = on_gpu
 
         self.n_units = n_units
         self.output_size = output_size
@@ -276,237 +283,20 @@ class RNNBase(nn.Module):
 
         self._is_built = True
 
+        if self.on_gpu:
+            if torch.cuda.is_available():
+                print(f'Running on GPU: {torch.cuda.get_device_name(torch.cuda.current_device())}')
+                self.cuda()
+        else:
+            print('No GPU found')
+            self.on_gpu = False
+
     def _initialize_hidden(self, x, *args):
         """
         Initialize hidden state of the network
         """
         return torch.zeros((1, x.shape[0], self.n_units))
 
-    def _fit_report(
-        self,
-        losses,
-        report_path=None,
-        **kwargs,
-    ):
-        """
-        Print out a report with training parameters and
-        losses history.
-
-        Arguments:
-            losses (list): list of (epoch, loss)
-            report_path (str, Path): path to .txt file were to save the training report
-            kwargs: keyword arguments specify the training parameters
-        """
-        rep = pi.Report(
-            title="Training report",
-            color=amber_light,
-            accent=salmon,
-            dim=orange,
-        )
-        final = losses[-1]
-        rep.add(
-            f"[{orange}]Final loss: [b]{round(final[-1], 5)}[/b] after [b]{final[0]}[/b] epochs."
-        )
-
-        # Add training params
-        tb = Table(box=None)
-        tb.add_column(style=f"bold {orange}", justify="right")
-        tb.add_column(style=f"{amber_light}", justify="left")
-
-        for param in sorted(kwargs, key=str.lower):
-            tb.add_row(param, str(kwargs[param]))
-        rep.add(tb, "rich")
-        rep.spacer()
-
-        # Add training loss
-        rep.add(f"[bold {salmon}]Training losses")
-        for n, (epoch, loss) in enumerate(losses):
-            if n % 100 == 0 or n == 0:
-                rep.add(f"[bold dim]{epoch}: [/bold dim]{round(loss, 4)}")
-
-        # Save and print
-        if report_path is not None:
-            srep = pi.utils.stringify(rep, maxlen=-1)
-            with open(report_path, "w") as fout:
-                fout.write(srep)
-
-        rep.print()
-
-    def _fit_setup(
-        self, dataset, batch_size, lr, l2norm, lr_milestones, gamma
-    ):
-        """
-        Sets up stuff needed for training, can be replaced by dedicated methods
-        in subclasses e.g. to specify a different optimizer.
-
-        Arguments:
-            dataset (DataSet): instant of torch.utils.data.DataSet subclass
-                with training data
-            batch_size (int): number of trials per batch
-            lr (float): initial learning rate
-            lr_milestones (list): list of epochs numbres at which
-                the learning rate should be decreased
-            gamma (float): factor by which lr should be reduced at each milestone.
-                The updated lr is given by lr * gamma
-            input_length (int): number of samples in the input
-            l2norm (float): l2 recurrent weights normalization
-
-        Returns:
-            loader: dataset loader (torch.utils.data.DataLoader)
-            optimizer: adam optimizer for SGD
-            scheduler: learning rate scheduler to decrease lr during training
-            criterion: function to compute loss at each epoch.
-        """
-        loader = torch.utils.data.DataLoader(
-            dataset,
-            batch_size=batch_size,
-            num_workers=0 if is_win else 2,
-            shuffle=True,
-            worker_init_fn=lambda x: np.random.seed(),
-        )
-
-        # Get optimizer
-        optimizer = torch.optim.Adam(
-            self.parameters(), lr=lr, weight_decay=l2norm, amsgrad=True
-        )
-
-        # Set up leraning rate scheudler
-        scheduler = torch.optim.lr_scheduler.MultiStepLR(
-            optimizer, milestones=lr_milestones, gamma=gamma
-        )
-
-        # Set up training loss
-        criterion = torch.nn.MSELoss()
-
-        return loader, optimizer, scheduler, criterion
-
-    def _fit_run_epoch(self, loader, optimizer, scheduler, criterion):
-        """
-        Runs a single training epoch: iterates over
-        batches, predicts each batch and computes epoch loss
-
-        Arguments:
-            loader: dataset loader
-            optimizer: e.g. Adam
-            scheduler: lr scheduler
-            criterion: function to calculate epoch loss
-
-        Returns:
-            epoch_loss (float): loss for this epoch
-            lr (float): current learning rate
-        """
-        # Loop over batch samples
-        epoch_loss = 0
-        for batchn, batch in enumerate(loader):
-            # initialise
-            X, Y = batch
-            h = self.on_batch_start(self, X, Y)
-
-            # zero gradient
-            optimizer.zero_grad()
-
-            # predict
-            output, h = self(X, h=h)
-
-            # backprop + optimizer
-            loss = criterion(output, Y)
-            loss.backward(retain_graph=True)
-
-            optimizer.step()
-            scheduler.step()
-
-            # get current lr
-            lr = scheduler.get_last_lr()[-1]
-
-            # update loss
-            epoch_loss += loss.item()
-        return epoch_loss, lr
-
-    def fit(
-        self,
-        dataset,
-        *args,
-        batch_size=64,
-        n_epochs=100,
-        lr=0.001,
-        lr_milestones=None,
-        gamma=0.1,
-        input_length=100,
-        l2norm=0,
-        stop_loss=None,
-        report_path=None,
-        **kwargs,
-    ):
-        """
-        Trains a RNN to predict the data in a dataset.
-
-        Argument:
-            dataset (DataSet): instant of torch.utils.data.DataSet subclass
-                with training data
-            batch_size (int): number of trials per batch
-            n_epochs (int): number of training epochs
-            lr (float): initial learning rate
-            lr_milestones (list): list of epochs numbres at which
-                the learning rate should be decreased
-            gamma (float): factor by which lr should be reduced at each milestone.
-                The updated lr is given by lr * gamma
-            input_length (int): number of samples in the input
-            l2norm (float): l2 recurrent weights normalization
-            stop_loss (float): if not None, when loss <= stop_loss training is stopped
-            report_path (str, Path): path to a .txt file where the training report
-                will be saved.
-        """
-        stop_loss = stop_loss or -1
-        lr_milestones = lr_milestones or [100000000]
-
-        if not self._is_built:
-            raise ValueError("Need to first BUILD the RNN model")
-
-        operators = self._fit_setup(
-            dataset, batch_size, lr, l2norm, lr_milestones, gamma
-        )
-
-        losses = []
-        with GracefulInterruptHandler() as h:
-            with train_progress as progress:
-                tid = progress.add_task(
-                    "Training",
-                    start=True,
-                    total=n_epochs,
-                    loss=0,
-                    lr=lr,
-                )
-
-                # loop over epochs
-                for epoch in range(n_epochs + 1):
-                    self.on_epoch_start(self, epoch)
-                    epoch_loss, lr = self._fit_run_epoch(*operators)
-
-                    train_progress.update(
-                        tid,
-                        completed=epoch,
-                        loss=epoch_loss,
-                        lr=lr,
-                    )
-                    losses.append((epoch, epoch_loss))
-
-                    if epoch_loss <= stop_loss or h.interrupted:
-                        break
-
-        # Make report about training process
-        self._fit_report(
-            losses,
-            batch_size=batch_size,
-            n_epochs=n_epochs,
-            lr=lr,
-            lr_milestones=lr_milestones,
-            gamma=gamma,
-            input_length=input_length,
-            l2norm=l2norm,
-            stop_loss=stop_loss,
-            report_path=report_path,
-        )
-        return [l[1] for l in losses]
 
     def predict_with_history(self, X):
         """

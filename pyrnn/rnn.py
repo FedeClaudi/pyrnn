@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch
+# from torch.nn.utils.rnn import pad_packed_sequence
 
 from ._utils import npify, torchify
 from ._rnn import RNNBase
@@ -32,6 +33,7 @@ class RNN(RNNBase):
         w_in_train=False,
         w_out_bias=False,
         w_out_train=False,
+        on_gpu=False,
     ):
         """
         Implements custom RNN.
@@ -49,6 +51,8 @@ class RNN(RNNBase):
                 layers will have a bias
             w_in_train/w_out_train (bool): if True in/out linear
                 layers will be trained
+            on_gpu (bool): if true computation is carried out on a GPU
+
         """
         # Initialize base RNN class
         RNNBase.__init__(
@@ -59,6 +63,7 @@ class RNN(RNNBase):
             dale_ratio=dale_ratio,
             autopses=autopses,
             connectivity=connectivity,
+            on_gpu=on_gpu,
         )
         self.w_in_bias = w_in_bias
         self.w_in_train = w_in_train
@@ -92,6 +97,7 @@ class RNN(RNNBase):
             w_in_train=self.w_in_train,
             w_out_bias=self.w_out_bias,
             w_out_train=self.w_out_train,
+            on_gpu=on_gpu,
         )
 
     def get_recurrent_weights(self):
@@ -124,6 +130,9 @@ class RNN(RNNBase):
         """
         if h is None:
             h = self._initialize_hidden(x)
+
+        if self.on_gpu:
+            h = h.cuda(0)
 
         # Compute hidden
         nbatch, length, ninp = x.shape
