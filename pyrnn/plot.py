@@ -6,8 +6,105 @@ import networkx as nx
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 
-from ._plot import clean_axes
+from ._plot import clean_axes, calc_nrows_ncols
 from ._utils import npify, flatten_h
+
+
+def plot_eigenvalues_magnitudes(evals, ax=None, color=None, alpha=None):
+    """
+    Plot the magnitude of a list of eigenvalues
+
+    Arguments:
+        evals: list of np.array of eigenvalues
+    """
+    color = color or [0.3, 0.3, 0.3]
+    alpha = alpha or 1
+    if ax is None:
+        f, ax = plt.subplots(figsize=(12, 8))
+        ax.spines["right"].set_visible(False)
+        ax.spines["top"].set_visible(False)
+
+    mags = sorted([np.abs(eval) for eval in evals], reverse=True)
+
+    ax.axhline(1, lw=3, ls="--", color=[0.3, 0.3, 0.3], alpha=0.5)
+    ax.plot(mags, "-", lw=3, color=[0.3, 0.3, 0.3])
+    ax.scatter(
+        np.arange(len(mags)),
+        mags,
+        color="w",
+        edgecolors=color,
+        alpha=alpha,
+        lw=2,
+        zorder=100,
+    )
+
+    ax.set(ylabel="$|\\lambda|$", xlabel="Eigenvalue index")
+    return ax
+
+
+def plot_eigenvalues(evals, only_dominant=False, ax=None):
+    """
+    Plot a list of eigenvalues in the complex plane
+
+    Arguments:
+        evals: list of np.array of eigenvalues
+        ax: axes object, optional.
+        only_dominant: bool, if True only the largest eval is shown
+    """
+    if ax is None:
+        f, ax = plt.subplots(figsize=(10, 10))
+
+        # Plot unit circle
+        t = np.linspace(0, 2 * np.pi, 360)
+        ax.plot(np.cos(t), np.sin(t), lw=2, ls="--", color=[0.6, 0.6, 0.6])
+
+    mags = [np.abs(eval) for eval in evals]
+    evals = np.array(evals)[np.argsort(mags)][::-1]
+
+    colors = colorMap(
+        np.array(mags)[np.argsort(mags)][::-1],
+        name="bwr",
+        vmin=0,
+        vmax=1.5,
+    )
+    reals = np.real(evals)
+    imgs = np.imag(evals)
+
+    if only_dominant:
+        ax.scatter(
+            reals[0],
+            imgs[0],
+            color=colors[0],
+            s=100,
+            alpha=0.8,
+            lw=1,
+            edgecolors=[0.3, 0.3, 0.3],
+        )
+    else:
+        ax.scatter(
+            reals,
+            imgs,
+            c=colors,
+            s=100,
+            alpha=0.8,
+            lw=1,
+            edgecolors=[0.3, 0.3, 0.3],
+        )
+
+    # Clean up figure
+    ax.spines["bottom"].set_position("zero")
+    ax.spines["left"].set_position("zero")
+    ax.spines["right"].set_visible(False)
+    ax.spines["top"].set_visible(False)
+
+    ax.axis("equal")
+    ax.set(xticks=[-1.5, 1.5], yticks=[-1.5, 1.5])
+    ax.set_xlabel("$\\Re$", fontsize=24, color=[0.3, 0.3, 0.3])
+    ax.xaxis.set_label_coords(1, 0.48)
+    ax.set_ylabel("$\\Im$", fontsize=24, color=[0.3, 0.3, 0.3])
+    ax.yaxis.set_label_coords(0.4, 1)
+
+    return ax
 
 
 def plot_fixed_points_eigenvalues(fps, only_dominant=True):
@@ -20,58 +117,32 @@ def plot_fixed_points_eigenvalues(fps, only_dominant=True):
         eigenvalue with largest magnitude for each FixedPoint
         is shown
     """
-    f, ax = plt.subplots(figsize=(10, 10))
+    nrows, ncols = calc_nrows_ncols(len(fps), aspect=(12, 12))
+    f, axarr = plt.subplots(
+        nrows=nrows, ncols=ncols, figsize=(12, 12), sharex=True
+    )
+    axarr = axarr.flatten()
 
-    # Plot unit circle
+    f2, ax2 = plt.subplots(figsize=(12, 8))
+
+    # for unit circle
     t = np.linspace(0, 2 * np.pi, 360)
-    ax.plot(np.cos(t), np.sin(t), lw=2, ls="--", color=[0.6, 0.6, 0.6])
 
     # Plot fixed points
-    for fp in fps:
+    for n, (ax, fp) in enumerate(zip(axarr, fps)):
         evals = [emode.eigv for emode in fp.eigenmodes]
-        mags = [np.abs(eval) for eval in evals]
-        evals = np.array(evals)[np.argsort(mags)][::-1]
+        plot_eigenvalues(evals, only_dominant=only_dominant, ax=ax)
 
-        colors = colorMap(
-            np.array(mags)[np.argsort(mags)][::-1],
-            name="bwr",
-            vmin=0,
-            vmax=1.5,
-        )
-        reals = np.real(evals)
-        imgs = np.imag(evals)
+        # plot unit circle
+        ax.plot(np.cos(t), np.sin(t), lw=2, ls="--", color=[0.6, 0.6, 0.6])
 
-        if only_dominant:
-            ax.scatter(
-                reals[0],
-                imgs[0],
-                color=colors[0],
-                s=100,
-                alpha=0.8,
-                lw=1,
-                edgecolors=[0.3, 0.3, 0.3],
-            )
-        else:
-            ax.scatter(
-                reals,
-                imgs,
-                c=colors,
-                s=100,
-                alpha=0.8,
-                lw=1,
-                edgecolors=[0.3, 0.3, 0.3],
-            )
+        # Plot eigenvalues magnitued
+        col = colorMap(fp.n_unstable_modes, name="viridis", vmin=0, vmax=4)
+        plot_eigenvalues_magnitudes(evals, ax=ax2, color=col)
 
-    # Clean up figure
-    clean_axes(f)
-    ax.spines["bottom"].set_position("zero")
-    ax.spines["left"].set_position("zero")
-    ax.axis("equal")
-    ax.set(xticks=[-1.5, 1.5], yticks=[-1.5, 1.5])
-    ax.set_xlabel("$\\Re$", fontsize=24, color=[0.3, 0.3, 0.3])
-    ax.xaxis.set_label_coords(1, 0.48)
-    ax.set_ylabel("$\\Im$", fontsize=24, color=[0.3, 0.3, 0.3])
-    ax.yaxis.set_label_coords(0.4, 1)
+    for ax in axarr[len(fps) :]:
+        ax.axis("off")
+
     return f
 
 
@@ -99,7 +170,9 @@ def plot_recurrent_weights(model):
     """
     f, ax = plt.subplots(figsize=(10, 10))
 
-    img = ax.imshow(npify(model.get_recurrent_weights(), flatten=False), cmap="bwr")
+    img = ax.imshow(
+        npify(model.get_recurrent_weights(), flatten=False), cmap="bwr"
+    )
 
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.05)

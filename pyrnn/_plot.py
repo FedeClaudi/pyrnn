@@ -1,30 +1,28 @@
 import seaborn as sns
-import matplotlib.cm as cm_mpl
+import math
 
 
-def map_color(value, name="jet", vmin=None, vmax=None):
-    """Map a real value in range [vmin, vmax] to a (r,g,b) color scale.
-
-    :param value: scalar value to transform into a color
-    :type value: float, list
-    :param name: color map name (Default value = "jet")
-    :type name: str, matplotlib.colors.LinearSegmentedColorMap
-    :param vmin:  (Default value = None)
-    :param vmax:  (Default value = None)
-    :returns: return: (r,g,b) color, or a list of (r,g,b) colors.
+def calc_nrows_ncols(N, aspect=(16, 9)):
     """
-    if vmax < vmin:
-        raise ValueError("vmax should be larger than vmin")
-
-    mp = cm_mpl.get_cmap(name=name)
-
-    value -= vmin
-    value /= vmax - vmin
-    # if value > 0.999:
-    #     value = 0.999
-    # elif value < 0:
-    #     value = 0
-    return mp(value)[0:3]
+    Computs the number of rows and columns to fit
+    a given number N of subplots in a figure with
+    aspect `aspect`.
+    from: https://stackoverflow.com/questions/36482328/how-to-use-a-python-produce-as-many-subplots-of-arbitrary-size-as-necessary-acco
+    """
+    width = aspect[0]
+    height = aspect[1]
+    area = width * height * 1.0
+    factor = (N / area) ** (1 / 2.0)
+    cols = math.floor(width * factor)
+    rows = math.floor(height * factor)
+    rowFirst = width < height
+    while rows * cols < N:
+        if rowFirst:
+            rows += 1
+        else:
+            cols += 1
+        rowFirst = not (rowFirst)
+    return rows, cols
 
 
 def clean_axes(f):

@@ -8,7 +8,12 @@ from pyinspect import Report
 
 from pyrnn._progress import fixed_points_progress
 from pyrnn._io import save_json, load_json
-from pyrnn._utils import flatten_h, GracefulInterruptHandler, torchify
+from pyrnn._utils import (
+    flatten_h,
+    GracefulInterruptHandler,
+    torchify,
+    get_eigs,
+)
 
 # named tuple storing eigen modes info
 eig_mode = namedtuple("eigmode", "stable, eigv, eigvec")
@@ -120,27 +125,17 @@ class FixedPoint(object):
 
         self.jacobian = jacobian.numpy()
 
-    def decompose_jacobian(self):
-        """
-        return eigen values and eigen vectors of jacobain
-        """
-        return np.linalg.eig(self.jacobian)
-
     def analyse_stability(self):
         """
         Inspects the magnitude of the eigen values
         of the dynamic's Jacobian to detect
         stable/unstable modes
         """
-        eigv, eigvecs = self.decompose_jacobian()
+        # Get jacobian's eigs
+        eigv, eigvecs = get_eigs(self.jacobian)
 
         # Get overall stability (all modes stable)
         self.is_stable = np.all(np.abs(eigv) < 1.0)
-
-        # Sort by eigv
-        sort_idx = np.argsort(eigv)
-        eigv = eigv[sort_idx]
-        eigvecs = eigvecs[:, sort_idx]
 
         # Get stability over each mode
         self.eigenmodes = []  # holds stable eigenvecs
