@@ -4,17 +4,13 @@ from rich import print
 from rich.prompt import Confirm
 from myterial import amber_light, orange
 import numpy as np
-import sys
 from pathlib import Path
-import pyinspect as pi
-# from torch.nn.utils.rnn import pad_packed_sequence
 
 
-from ._progress import train_progress, base_progress
-from ._utils import npify, GracefulInterruptHandler
+from ._progress import base_progress
+from ._utils import npify
 from ._io import load_json, save_json
 from ._trainer import Trainer
-
 
 
 # --------------------------- Placeholder functions -------------------------- #
@@ -157,7 +153,6 @@ class RNNBase(nn.Module, Trainer):
         super(RNNBase, self).__init__()
         Trainer.__init__(self)
 
-
         self.on_gpu = on_gpu
 
         self.n_units = n_units
@@ -285,10 +280,12 @@ class RNNBase(nn.Module, Trainer):
 
         if self.on_gpu:
             if torch.cuda.is_available():
-                print(f'Running on GPU: {torch.cuda.get_device_name(torch.cuda.current_device())}')
+                print(
+                    f"Running on GPU: {torch.cuda.get_device_name(torch.cuda.current_device())}"
+                )
                 self.cuda()
         else:
-            print('No GPU found')
+            print("No GPU found")
             self.on_gpu = False
 
     def _initialize_hidden(self, x, *args):
@@ -296,7 +293,6 @@ class RNNBase(nn.Module, Trainer):
         Initialize hidden state of the network
         """
         return torch.zeros((1, x.shape[0], self.n_units))
-
 
     def predict_with_history(self, X):
         """

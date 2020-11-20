@@ -6,7 +6,9 @@ from pyrnn._utils import flatten_h
 from pyrnn._plot import clean_axes
 
 
-def get_n_components_with_pca(arr, is_hidden=False, variance_th=0.85, plot=True):
+def get_n_components_with_pca(
+    arr, is_hidden=False, variance_th=0.85, plot=True
+):
     """
     Uses PCA and looks at the variance explained
     by each principal component and looks at how

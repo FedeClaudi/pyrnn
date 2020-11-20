@@ -65,7 +65,7 @@ def render_state_history_pca_3d(
     _show=True,
     actors=None,
     mark_start=False,
-    start_color='k',
+    start_color="k",
     axes=0,
     color_by_trial=False,
 ):
@@ -105,7 +105,6 @@ def render_state_history_pca_3d(
 
         if mark_start:
             actors.append(Sphere(points[0][0], r=0.15, c=start_color))
-
 
     render(actors, _show=_show, axes=axes)
     return pca, actors

@@ -34,7 +34,7 @@ rnn = RNN(
     autopses=False,
     dale_ratio=0.8,
     n_units=n_units,
-    on_gpu=False
+    on_gpu=False,
 )
 
 loss_history = rnn.fit(

@@ -1,35 +1,36 @@
 import pyinspect as pi
 import numpy as np
 import torch
-from torch.nn.utils.rnn import pad_sequence # , pack_padded_sequence 
-import torch.nn as nn
+from torch.nn.utils.rnn import pad_sequence  # , pack_padded_sequence
 import sys
 from myterial import amber_light, orange, salmon
-from rich import print
 from rich.table import Table
-from rich.prompt import Confirm
 
-from ._progress import train_progress, base_progress
-from ._utils import npify, GracefulInterruptHandler
+from ._progress import train_progress
+from ._utils import GracefulInterruptHandler
 
 is_win = sys.platform == "win32"
 
 # ------------------------- Data loader collate func ------------------------ #
+
+
 def pad_pack_collate(batch):
     (xx, yy) = zip(*batch)
-    x_lens = [len(x) for x in xx]
-    y_lens = [len(y) for y in yy]
+    # x_lens = [len(x) for x in xx]
+    # y_lens = [len(y) for y in yy]
 
     x_padded = pad_sequence(xx, batch_first=True, padding_value=0)
     y_padded = pad_sequence(yy, batch_first=True, padding_value=0)
 
     # x_packed = pack_padded_sequence(x_padded, x_lens, batch_first=True, enforce_sorted=False)
     # y_packed = pack_padded_sequence(y_padded, y_lens, batch_first=True, enforce_sorted=False)
-    return x_padded, y_padded # , x_lens, y_lens
+    return x_padded, y_padded  # , x_lens, y_lens
+
 
 # ---------------------------------------------------------------------------- #
 #                                    Trainer                                   #
 # ---------------------------------------------------------------------------- #
+
 
 class Trainer:
     def __init__(self):
@@ -78,7 +79,13 @@ class Trainer:
             raise ValueError("Need to first BUILD the RNN model")
 
         operators = self.setup(
-            dataset, batch_size, lr, l2norm, lr_milestones, gamma, num_workers=num_workers,
+            dataset,
+            batch_size,
+            lr,
+            l2norm,
+            lr_milestones,
+            gamma,
+            num_workers=num_workers,
         )
 
         losses = []
@@ -124,7 +131,14 @@ class Trainer:
         return [l[1] for l in losses]
 
     def setup(
-        self, dataset, batch_size, lr, l2norm, lr_milestones, gamma, num_workers=None,
+        self,
+        dataset,
+        batch_size,
+        lr,
+        l2norm,
+        lr_milestones,
+        gamma,
+        num_workers=None,
     ):
         """
         Sets up stuff needed for training, can be replaced by dedicated methods
@@ -157,7 +171,7 @@ class Trainer:
             num_workers=num_workers,
             shuffle=True,
             worker_init_fn=lambda x: np.random.seed(),
-            pin_memory = False,
+            pin_memory=False,
             collate_fn=pad_pack_collate,
         )
 
@@ -224,7 +238,6 @@ class Trainer:
             # update loss
             epoch_loss += loss.item()
         return epoch_loss, lr
-
 
     def report(
         self,
