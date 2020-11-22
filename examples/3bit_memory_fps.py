@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import torch
+from einops import repeat
 
 import sys
 
@@ -12,6 +13,7 @@ from pyrnn.tasks.three_bit_memory import (
     is_win,
     make_batch,
 )
+from pyrnn._utils import torchify
 from pyrnn.analysis import (
     FixedPoints,
     FixedPointsConnectivity,
@@ -34,7 +36,7 @@ N = 2048
 batch_size = 128
 
 constant_inputs = [
-    torch.from_numpy(np.array([0, 0, 0]).astype(np.float32)).reshape(1, 1, -1),
+    repeat(torchify(np.zeros(3)), "n i -> b n i", b=3),
 ]
 
 rnn = RNN.load("./3bit_memory.pt", n_units=64, input_size=3, output_size=3)

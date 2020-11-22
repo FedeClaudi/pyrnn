@@ -14,6 +14,7 @@ requirements = [
     "numpy",
     "networkx",
     "myterial",
+    "einops",
 ]
 
 setup(

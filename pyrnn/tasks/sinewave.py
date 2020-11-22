@@ -6,8 +6,9 @@ from myterial import salmon, light_green_dark, indigo_light
 from pyrnn._plot import clean_axes
 import torch.utils.data as data
 import sys
+from einops import repeat
 
-from pyrnn._utils import torchify, npify
+from pyrnn._utils import torchify, npify, prepend_dim
 
 """
     Sine wave task
@@ -26,11 +27,11 @@ def sinewave_on_batch_start(rnn, x, y):
     t = np.arange(0, sequence_length * step, step=step)
 
     x = np.sin(2 * np.pi * omega * t)
-    X = torchify(x.astype(np.float32)).reshape(-1, 1)
+    X = torchify(prepend_dim(x))
 
     h = None
     for step in range(sequence_length):
-        o, h = rnn(X[step, :].reshape(1, 1, -1), h)
+        o, h = rnn(repeat(X[step, :], "n i -> b n i", b=1), h)
     return h
 
 
@@ -60,10 +61,10 @@ class SineWaveDataset(data.Dataset):
 
         x = np.ones(self.sequence_length) * inp
 
-        X = torchify(x).reshape(-1, 1)
+        X = torchify(prepend_dim(x))
 
         y = np.sin(2 * np.pi * omega * t)
-        Y = torchify(y).reshape(-1, 1)
+        Y = torchify(prepend_dim(y))
 
         return X, Y
 

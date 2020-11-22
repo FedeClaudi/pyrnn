@@ -5,6 +5,7 @@ from rich.prompt import Confirm
 from myterial import amber_light, orange
 import numpy as np
 from pathlib import Path
+from einops import repeat
 
 
 from ._progress import base_progress
@@ -170,6 +171,17 @@ class RNNBase(nn.Module, Trainer):
         # place holder functions, to be replaced if necessary
         self.on_epoch_start = on_epoch_start
         self.on_batch_start = on_batch_start
+
+        # Store params
+        self.params = dict(
+            input_size=self.input_size,
+            output_size=self.output_size,
+            n_units=self.n_units,
+            dale_ratio=self.dale_ratio,
+            autopses=self.autopses,
+            connectivity=self.connectivity,
+            on_gpu=on_gpu,
+        )
 
     @classmethod
     def from_dict(cls, params):
@@ -344,7 +356,9 @@ class RNNBase(nn.Module, Trainer):
                         trial_id,
                         completed=step,
                     )
-                    o, h = self(X[trialn, step, :].reshape(1, 1, -1), h)
+                    o, h = self(
+                        repeat(X[trialn, step, :], "i -> b n i", n=1, b=1), h
+                    )
                     hidden_trace[trialn, step, :] = npify(h)
                     output_trace[trialn, step, :] = npify(o)
 

@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import torch
+from einops import repeat
 
 import sys
 
@@ -37,7 +38,7 @@ K = 2
 n_units = 64
 
 constant_inputs = [
-    torchify(np.zeros(K)).reshape(1, 1, -1),
+    repeat(torchify(np.zeros(K)), "n i -> b n i", b=3),
 ]
 
 rnn = RNN.load(

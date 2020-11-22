@@ -9,7 +9,7 @@ from random import choice
 import itertools
 
 from pyrnn._plot import clean_axes
-from pyrnn._utils import torchify
+from pyrnn._utils import torchify, prepend_dim
 
 """
     2d memory task
@@ -71,7 +71,7 @@ class IntegratorDataset(data.Dataset):
             return X_batch, Y_batch
         else:
             x, y = self._mk(item)
-            return x.reshape(-1, 1), y.reshape(-1, 1)
+            return prepend_dim(x), prepend_dim(y)
 
 
 def make_batch(seq_len, batch_size=1, **kwargs):

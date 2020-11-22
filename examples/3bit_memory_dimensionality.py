@@ -46,7 +46,6 @@ list_fixed_points(fps)
 plot_fixed_points_eigenvalues(fps, only_dominant=False)
 plt.show()
 
-
 # ------------------ Dimensionality of the recurrent weights ----------------- #
 """
     Okay so it looks like the dynamics are restricted to a 3D subspace.
@@ -58,6 +57,7 @@ eigv, eigvecs = get_eigs(rnn.get_recurrent_weights())
 
 ax = plot_eigenvalues(eigv)
 ax.set(title="Recurrent weights matrix eigenvalues")
-plot_eigenvalues_magnitudes(eigv)
+ax = plot_eigenvalues_magnitudes(eigv)
+ax.set(title="Recurrent weights matrix eigenvalues magnitudes")
 
 plt.show()

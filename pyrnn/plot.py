@@ -99,9 +99,9 @@ def plot_eigenvalues(evals, only_dominant=False, ax=None):
 
     ax.axis("equal")
     ax.set(xticks=[-1.5, 1.5], yticks=[-1.5, 1.5])
-    ax.set_xlabel("$\\Re$", fontsize=24, color=[0.3, 0.3, 0.3])
+    ax.set_xlabel("$\\Re$", fontsize=12, color=[0.3, 0.3, 0.3])
     ax.xaxis.set_label_coords(1, 0.48)
-    ax.set_ylabel("$\\Im$", fontsize=24, color=[0.3, 0.3, 0.3])
+    ax.set_ylabel("$\\Im$", fontsize=12, color=[0.3, 0.3, 0.3])
     ax.yaxis.set_label_coords(0.4, 1)
 
     return ax

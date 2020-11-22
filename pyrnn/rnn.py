@@ -87,18 +87,13 @@ class RNN(RNNBase):
         # Build
         self.build()
 
-        self.params = dict(
-            input_size=self.input_size,
-            output_size=self.output_size,
-            n_units=self.n_units,
-            dale_ratio=self.dale_ratio,
-            autopses=self.autopses,
-            connectivity=self.connectivity,
-            w_in_bias=self.w_in_bias,
-            w_in_train=self.w_in_train,
-            w_out_bias=self.w_out_bias,
-            w_out_train=self.w_out_train,
-            on_gpu=on_gpu,
+        self.params.update(
+            dict(
+                w_in_bias=self.w_in_bias,
+                w_in_train=self.w_in_train,
+                w_out_bias=self.w_out_bias,
+                w_out_train=self.w_out_train,
+            )
         )
 
     def get_recurrent_weights(self):
@@ -207,15 +202,6 @@ class TorchRNN(RNNBase):
 
         # Build
         self.build()
-
-        self.params = dict(
-            input_size=self.input_size,
-            output_size=self.output_size,
-            n_units=self.n_units,
-            dale_ratio=self.dale_ratio,
-            autopses=self.autopses,
-            connectivity=self.connectivity,
-        )
 
     def get_recurrent_weights(self):
         """

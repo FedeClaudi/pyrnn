@@ -5,6 +5,7 @@ from myterial import amber_light, orange, cyan
 from scipy.spatial.distance import euclidean
 from collections import namedtuple
 from pyinspect import Report
+from einops import repeat
 
 from pyrnn._progress import fixed_points_progress
 from pyrnn._io import save_json, load_json
@@ -121,7 +122,7 @@ class FixedPoint(object):
             g = torch.autograd.grad(
                 _h, h, grad_outputs=output, retain_graph=True
             )[0]
-            jacobian[:, i : i + 1] = g[0, 0, :].reshape(-1, 1)
+            jacobian[:, i : i + 1] = repeat(g[0, 0, :], "i -> n i", n=1)
 
         self.jacobian = jacobian.numpy()
 
@@ -266,7 +267,7 @@ class FixedPoints(object):
             for n_cn, constant_input in enumerate(constant_inputs):
                 gamma = self.gamma
 
-                h = torch.from_numpy(hid.astype(np.float32)).reshape(1, 1, -1)
+                h = repeat(torchify(hid), "n i -> b n i", b=1)
                 h.requires_grad = True
                 h.retain_grad()
 

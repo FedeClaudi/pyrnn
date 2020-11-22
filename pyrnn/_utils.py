@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from itertools import combinations_with_replacement as combinations
 import signal
+from einops import repeat
 
 
 def get_eigs(arr):
@@ -64,7 +65,7 @@ def prepend_dim(arr):
     """
     Add a dimension to an array
     """
-    return arr.reshape(1, -1)
+    return repeat(arr, "i -> n i", n=1)
 
 
 def pairs(iterable):
@@ -77,6 +78,10 @@ def pairs(iterable):
 
 class GracefulInterruptHandler(object):
     def __init__(self, sig=signal.SIGINT):
+        """
+        Used as a context captures CTRL+C
+        events and handles them gracefully.
+        """
         self.sig = sig
 
     def __enter__(self):

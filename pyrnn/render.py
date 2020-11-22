@@ -156,7 +156,7 @@ def render_fixed_points(
             if fp.n_unstable_modes != n and sequential:
                 continue
             # Get position
-            pos = t(fp.h.reshape(1, -1))[0, :]
+            pos = t(prepend_dim(fp.h))[0, :]
 
             # Get color
             color = get_fp_color(fp.n_unstable_modes)
@@ -164,7 +164,7 @@ def render_fixed_points(
             # plot unstable modes
             for stable, eigval, eigvec in fp.eigenmodes:
                 if not stable:
-                    delta = t((eigval * -eigvec).reshape(1, -1))[0]
+                    delta = t(prepend_dim(eigval * -eigvec))[0]
                     p0 = pos - (scale * delta)
                     p1 = pos + (scale * delta)
 
