@@ -13,8 +13,9 @@ from pyrnn._utils import (
     flatten_h,
     GracefulInterruptHandler,
     torchify,
-    get_eigs,
 )
+
+from pyrnn.linalg import get_eigs, classify_equilibrium, get_trc_det, fp_colors
 
 # named tuple storing eigen modes info
 eig_mode = namedtuple("eigmode", "stable, eigv, eigvec")
@@ -32,6 +33,9 @@ def list_fixed_points(fps):
     fps = sorted(fps, key=lambda fp: fp.n_unstable_modes)
     for fp in fps:
         s = f"[b {orange}]{fp.fp_id:03}[/b {orange}] - Stable: [{cyan}]{fp.is_stable}[/{cyan}]"
+
+        col = fp_colors[fp._type]
+        s += f" | type: [{col} bold]{fp._type}[/{col} bold]"
         if not fp.is_stable:
             s += f" | n unstable modes: {fp.n_unstable_modes}"
         rep.add(s)
@@ -135,11 +139,15 @@ class FixedPoint(object):
         # Get jacobian's eigs
         eigv, eigvecs = get_eigs(self.jacobian)
 
+        # Get type of equilibrium
+        self._type = classify_equilibrium(*get_trc_det(self.jacobian))
+
         # Get overall stability (all modes stable)
         self.is_stable = np.all(np.abs(eigv) < 1.0)
 
         # Get stability over each mode
         self.eigenmodes = []  # holds stable eigenvecs
+
         for e_val, e_vec in zip(eigv, eigvecs.T):
             # Magnitude of complex eigenvalue
             eigv_mag = np.abs(e_val)

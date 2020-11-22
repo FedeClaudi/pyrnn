@@ -9,7 +9,7 @@ from pyrnn import RNN
 from pyrnn.render import render_state_history_pca_3d
 
 # from pyrnn.plot import plot_render_state_history_pca_2d
-from pyrnn.tasks.integrator import make_batch
+from tasks.integrator import make_batch
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 

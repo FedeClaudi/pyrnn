@@ -7,7 +7,7 @@ sys.path.append("./")
 
 from pyrnn import RNN
 from pyrnn.plot import plot_training_loss
-from pyrnn.tasks.integrator import (
+from tasks.integrator import (
     IntegratorDataset,
     plot_predictions,
 )

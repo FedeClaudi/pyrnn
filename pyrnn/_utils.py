@@ -5,22 +5,6 @@ import signal
 from einops import repeat
 
 
-def get_eigs(arr):
-    """
-    Return the eigenvalues and eigenvectors of
-    an input array, sorted by the magnitue
-    of the eigenvalues
-    """
-    eigv, eigvecs = np.linalg.eig(arr)
-
-    # Sort by eigv
-    sort_idx = np.argsort(eigv)
-    eigv = eigv[sort_idx]
-    eigvecs = eigvecs[:, sort_idx]
-
-    return eigv, eigvecs
-
-
 def flatten_h(h):
     """
     Flatten the hidden state array

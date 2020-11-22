@@ -8,7 +8,7 @@ import sys
 sys.path.append("./")
 
 from pyrnn import RNN
-from pyrnn.tasks.three_bit_memory import (
+from tasks.three_bit_memory import (
     ThreeBitDataset,
     is_win,
     make_batch,
@@ -36,7 +36,7 @@ N = 2048
 batch_size = 128
 
 constant_inputs = [
-    repeat(torchify(np.zeros(3)), "n i -> b n i", b=3),
+    repeat(torchify(np.zeros(3)), "i -> b n i", b=1, n=1),
 ]
 
 rnn = RNN.load("./3bit_memory.pt", n_units=64, input_size=3, output_size=3)

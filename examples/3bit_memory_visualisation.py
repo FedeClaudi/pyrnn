@@ -6,7 +6,7 @@ sys.path.append("./")
 
 from pyrnn import RNN
 from pyrnn.render import render_state_history_pca_3d
-from pyrnn.tasks.three_bit_memory import make_batch
+from tasks.three_bit_memory import make_batch
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 

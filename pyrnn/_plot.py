@@ -2,6 +2,18 @@ import seaborn as sns
 import math
 
 
+def center_axes(ax):
+    """
+    Makes a plot's axes meet at the
+    center instead of at the bottom left corner
+    """
+    ax.spines["bottom"].set_position("zero")
+    ax.spines["left"].set_position("zero")
+    ax.spines["right"].set_visible(False)
+    ax.spines["top"].set_visible(False)
+    return ax
+
+
 def calc_nrows_ncols(N, aspect=(16, 9)):
     """
     Computs the number of rows and columns to fit

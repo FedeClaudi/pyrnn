@@ -8,7 +8,7 @@ import sys
 sys.path.append("./")
 
 from pyrnn import RNN
-from pyrnn.tasks.integrator import (
+from tasks.integrator import (
     IntegratorDataset,
     is_win,
     make_batch,

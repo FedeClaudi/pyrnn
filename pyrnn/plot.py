@@ -1,13 +1,77 @@
 import matplotlib.pyplot as plt
-from myterial import salmon
+from myterial import salmon, grey, blue_grey, blue_grey_light, orange
 from sklearn.decomposition import PCA
 from vedo.colors import colorMap
 import networkx as nx
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 
-from ._plot import clean_axes, calc_nrows_ncols
+from ._plot import clean_axes, calc_nrows_ncols, center_axes
 from ._utils import npify, flatten_h
+from .linalg import classify_equilibrium
+
+
+def plot_fixed_point_classification(tr, det, ax=None):
+    """
+    Given the trace and determinant of a dynamical
+    system linearixed at a fixed point, shows what kind of fixed
+    point (e.g. saddle, stable node...) it is.
+    """
+    if ax is None:
+        f, ax = plt.subplots(figsize=(12, 8))
+
+    # Show fixed point
+    ax.scatter(
+        tr,
+        det,
+        s=150,
+        lw=2,
+        edgecolors=[0.2, 0.2, 0.2],
+        color=orange,
+        zorder=100,
+    )
+
+    # Create annotated figure
+    # Draw lines
+    ax.axline((0, -1), (2, 1), lw=3, color=blue_grey, zorder=2)
+    ax.axline((0, -1), (-2, 1), lw=3, color=blue_grey, zorder=2)
+    ax.plot((-2, 2), (1, 1), lw=3, color=blue_grey, zorder=2)
+
+    # Draw parabola
+    a, b, c = 0.25, 0, 0
+    x_pos = np.arange(-3, 3, 0.1)
+    y_pos = (a * (x_pos ** 2)) + (b * x_pos) + c
+    ax.plot(x_pos, y_pos, lw=3, color=blue_grey_light, zorder=2)
+
+    # Annotate
+    ax.text(-0.5, 1.5, "Spiral source")
+    ax.text(-0.5, 1, "Center")
+    ax.text(-0.5, 0.5, "Spiral sink")
+    ax.text(-0.3, -0.5, "Sink")
+    ax.text(-0.3, -1.5, "Source")
+    ax.text(-2, -0.5, "Saddle")
+    ax.text(2, -0.5, "Saddle")
+    ax.text(-3, 2, "Source")
+    ax.text(2.8, 2, "Source")
+
+    # Clean ax
+    ax.spines["bottom"].set_color(grey)
+    ax.spines["left"].set_color(grey)
+    ax.tick_params(axis="x", colors=grey)
+    ax.tick_params(axis="y", colors=grey)
+
+    center_axes(ax)
+    ax.set(
+        title=f"Fixed point classification: {classify_equilibrium(tr, det)}",
+        xlim=[-3, 3],
+        ylim=[-2, 2],
+        xticks=[-1, 1],
+        yticks=[-1, 1],
+    )
+    ax.set_xlabel("Tr", fontsize=12, color=[0.3, 0.3, 0.3])
+    ax.xaxis.set_label_coords(1, 0.48)
+    ax.set_ylabel("Det", fontsize=12, color=[0.3, 0.3, 0.3])
+    ax.yaxis.set_label_coords(0.48, 0.975)
 
 
 def plot_eigenvalues_magnitudes(evals, ax=None, color=None, alpha=None):
@@ -92,10 +156,7 @@ def plot_eigenvalues(evals, only_dominant=False, ax=None):
         )
 
     # Clean up figure
-    ax.spines["bottom"].set_position("zero")
-    ax.spines["left"].set_position("zero")
-    ax.spines["right"].set_visible(False)
-    ax.spines["top"].set_visible(False)
+    center_axes(ax)
 
     ax.axis("equal")
     ax.set(xticks=[-1.5, 1.5], yticks=[-1.5, 1.5])

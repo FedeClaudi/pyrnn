@@ -164,7 +164,7 @@ def render_fixed_points(
             # plot unstable modes
             for stable, eigval, eigvec in fp.eigenmodes:
                 if not stable:
-                    delta = t(prepend_dim(eigval * -eigvec))[0]
+                    delta = t((eigval * -eigvec).reshape(1, -1))[0]
                     p0 = pos - (scale * delta)
                     p1 = pos + (scale * delta)
 

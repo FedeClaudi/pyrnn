@@ -6,7 +6,7 @@ import numpy as np
 import torch
 
 from pyrnn import RNN, plot_training_loss, render_state_history_pca_3d
-from pyrnn.tasks.sinewave import (
+from tasks.sinewave import (
     SineWaveDataset,
     plot_predictions,
     sinewave_on_batch_start,

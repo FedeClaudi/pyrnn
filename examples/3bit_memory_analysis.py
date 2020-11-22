@@ -2,17 +2,19 @@ import os
 import sys
 
 sys.path.append("./")
+from tasks.three_bit_memory import make_batch
+
 
 from pyrnn import RNN
-from pyrnn.tasks.three_bit_memory import make_batch
 from pyrnn.analysis.dimensionality import get_n_components_with_pca
 from pyrnn.analysis import FixedPoints, list_fixed_points
 from pyrnn.plot import (
     plot_eigenvalues,
     plot_eigenvalues_magnitudes,
     plot_fixed_points_eigenvalues,
+    plot_fixed_point_classification,
 )
-from pyrnn._utils import get_eigs
+from pyrnn.linalg import get_eigs, get_trc_det
 import matplotlib.pyplot as plt
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
@@ -42,8 +44,18 @@ get_n_components_with_pca(h, is_hidden=True)
 """
 fps = FixedPoints.load_fixed_points("./3bit_fps.json")
 list_fixed_points(fps)
-
 plot_fixed_points_eigenvalues(fps, only_dominant=False)
+
+
+"""
+Plot each fixed point in the trace/determinant plane
+"""
+f, ax = plt.subplots(figsize=(12, 8))
+for fp in fps:
+    trace, det = get_trc_det(fp.jacobian.T)
+    print(round(trace, 3), round(det, 3), fp.n_unstable_modes)
+    plot_fixed_point_classification(trace, det, ax=ax)
+
 plt.show()
 
 # ------------------ Dimensionality of the recurrent weights ----------------- #
