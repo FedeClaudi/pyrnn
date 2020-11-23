@@ -1,78 +1,36 @@
 import numpy as np
 from rich import print
 from myterial import (
-    purple,
-    indigo,
-    indigo_dark,
-    teal,
     teal_dark,
     light_blue,
     orange,
 )
 
 # Fixed points colors
-saddle_c = purple
-sink_c = indigo
-spiral_sink_c = indigo_dark
-source_c = teal
-spiral_source_c = teal_dark
-center_c = light_blue
-
-fp_colors = dict(
-    saddle=saddle_c,
-    sink=sink_c,
-    spiral_sink=spiral_sink_c,
-    source=source_c,
-    spiral_source=spiral_source_c,
-    center=light_blue,
-)
+fp_colors = dict(attractor=orange, center=teal_dark, saddle=light_blue)
 
 
-def classify_equilibrium(tr, det):
+def classify_equilibrium(eigenvalues):
     """
-    Classify an equilibriom (e.g. spiral source, sink)
-    using the trace determinant method.
-    See:
-        - https://images.slideplayer.com/39/11002714/slides/slide_10.jpg
-        - https://demonstrations.wolfram.com/EigenvaluesAndTheTraceDeterminantPlaneOfALinearMap/
-
-    Arguments:
-        det (float): matrix determinant
-        tr (float): matrix trace
-
-    Returns:
-        str, type of equilibrium
+    Given the eigenvalues of a system
+    linearized around an equilibrium,
+    classify the type of equilibriums
     """
+    real = np.abs(eigenvalues)
 
-    parabola = (tr ** 2) / 4
-
-    if det < 0:
-        equilibrium = "saddle"
-    elif det == 0:
-        if tr < 0:
-            equilibrium = "line of stable fixed points"
-        elif tr == 0:
-            equilibrium = "uniform"
-        else:
-            equilibrium = "line of unstable fixed points"
+    if np.all(real < 1.0):
+        equilibrium = "attractor"
     else:
-        if det < parabola:
-            if tr < 0:
-                equilibrium = "sink"
-            else:
-                equilibrium = "source"
-        elif det == parabola:
-            if tr < 0:
-                equilibrium = "degenerate sink"
-            else:
-                equilibrium = "degenerate source"
+        if np.any(real == 1):
+            print(
+                f"[{orange}]Some eigenvalues have purely immaginary components. "
+                "They could be centers if the conditions for the Harman-Grobman "
+                "theorem are met."
+            )
+            equilibrium = "center"
         else:
-            if tr < 0:
-                equilibrium = "spiral sink"
-            elif tr == 0:
-                equilibrium = "center"
-            else:
-                equilibrium = "spiral source"
+            n_unstable = len(np.where(real > 1)[0])
+            equilibrium = f"{n_unstable}-saddle"
     return equilibrium
 
 

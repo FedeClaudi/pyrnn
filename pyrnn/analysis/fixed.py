@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from rich import print
-from myterial import amber_light, orange, cyan
+from myterial import amber_light, orange
 from scipy.spatial.distance import euclidean
 from collections import namedtuple
 from pyinspect import Report
@@ -15,7 +15,7 @@ from pyrnn._utils import (
     torchify,
 )
 
-from pyrnn.linalg import get_eigs, classify_equilibrium, get_trc_det, fp_colors
+from pyrnn.linalg import get_eigs, classify_equilibrium, fp_colors
 
 # named tuple storing eigen modes info
 eig_mode = namedtuple("eigmode", "stable, eigv, eigvec")
@@ -29,15 +29,15 @@ def list_fixed_points(fps):
         fps: list of FixedPoint objects
     """
 
-    rep = Report(title="fps", color=amber_light, accent=orange)
+    rep = Report(title="Fixed points", color=amber_light, accent=orange)
     fps = sorted(fps, key=lambda fp: fp.n_unstable_modes)
     for fp in fps:
-        s = f"[b {orange}]{fp.fp_id:03}[/b {orange}] - Stable: [{cyan}]{fp.is_stable}[/{cyan}]"
+        s = f"[dim b {orange}]{fp.fp_id:03}[/dim b {orange}] - "
 
-        col = fp_colors[fp._type]
-        s += f" | type: [{col} bold]{fp._type}[/{col} bold]"
-        if not fp.is_stable:
-            s += f" | n unstable modes: {fp.n_unstable_modes}"
+        # Print stability type
+        _type = fp._type if "saddle" not in fp._type else "saddle"
+        col = fp_colors[_type]
+        s += f"[{col} bold]{fp._type}[/{col} bold]"
         rep.add(s)
     rep.print()
 
@@ -140,7 +140,7 @@ class FixedPoint(object):
         eigv, eigvecs = get_eigs(self.jacobian)
 
         # Get type of equilibrium
-        self._type = classify_equilibrium(*get_trc_det(self.jacobian))
+        self._type = classify_equilibrium(eigv)
 
         # Get overall stability (all modes stable)
         self.is_stable = np.all(np.abs(eigv) < 1.0)
