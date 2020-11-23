@@ -52,8 +52,9 @@ Plot each fixed point in the trace/determinant plane
 """
 f, ax = plt.subplots(figsize=(12, 8))
 for fp in fps:
-    trace, det = get_trc_det(fp.jacobian.T)
-    print(round(trace, 3), round(det, 3), fp.n_unstable_modes)
+    trace, det = get_trc_det(fp.jacobian)
+
+    print(round(trace, 3), det, fp.n_unstable_modes)
     plot_fixed_point_classification(trace, det, ax=ax)
 
 plt.show()

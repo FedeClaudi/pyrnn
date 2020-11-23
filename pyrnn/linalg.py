@@ -44,34 +44,35 @@ def classify_equilibrium(tr, det):
         str, type of equilibrium
     """
 
-    line1 = -tr - 1  # det = -tr -1
-    line2 = tr - 1  # det = tr -1
     parabola = (tr ** 2) / 4
 
-    if det < line1 and det > line2:
+    if det < 0:
         equilibrium = "saddle"
-
-    elif det < line1 and det < line2:
-        equilibrium = "source"
-
-    elif det > line1 and det < line2:
-        equilibrium = "saddle"
-
-    elif det > line1 and det > line2 and det == 1:
-        equilibrium = "center"
-
-    elif det > line1 and det > line2 and det < 1 and det < parabola:
-        equilibrium = "sink"
-
-    elif det > line1 and det > line2 and det < 1 and det > parabola:
-        equilibrium = "spiral sink"
-
-    elif det > line1 and det > line2 and det < parabola:
-        equilibrium = "source"
-
+    elif det == 0:
+        if tr < 0:
+            equilibrium = "line of stable fixed points"
+        elif tr == 0:
+            equilibrium = "uniform"
+        else:
+            equilibrium = "line of unstable fixed points"
     else:
-        equilibrium = "spiral source"
-
+        if det < parabola:
+            if tr < 0:
+                equilibrium = "sink"
+            else:
+                equilibrium = "source"
+        elif det == parabola:
+            if tr < 0:
+                equilibrium = "degenerate sink"
+            else:
+                equilibrium = "degenerate source"
+        else:
+            if tr < 0:
+                equilibrium = "spiral sink"
+            elif tr == 0:
+                equilibrium = "center"
+            else:
+                equilibrium = "spiral source"
     return equilibrium
 
 

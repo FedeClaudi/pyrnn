@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from myterial import salmon, grey, blue_grey, blue_grey_light, orange
+from myterial import salmon, grey, blue_grey, orange
 from sklearn.decomposition import PCA
 from vedo.colors import colorMap
 import networkx as nx
@@ -32,27 +32,19 @@ def plot_fixed_point_classification(tr, det, ax=None):
     )
 
     # Create annotated figure
-    # Draw lines
-    ax.axline((0, -1), (2, 1), lw=3, color=blue_grey, zorder=2)
-    ax.axline((0, -1), (-2, 1), lw=3, color=blue_grey, zorder=2)
-    ax.plot((-2, 2), (1, 1), lw=3, color=blue_grey, zorder=2)
 
     # Draw parabola
     a, b, c = 0.25, 0, 0
     x_pos = np.arange(-3, 3, 0.1)
     y_pos = (a * (x_pos ** 2)) + (b * x_pos) + c
-    ax.plot(x_pos, y_pos, lw=3, color=blue_grey_light, zorder=2)
+    ax.plot(x_pos, y_pos, lw=3, color=blue_grey, zorder=2)
 
     # Annotate
-    ax.text(-0.5, 1.5, "Spiral source")
-    ax.text(-0.5, 1, "Center")
-    ax.text(-0.5, 0.5, "Spiral sink")
-    ax.text(-0.3, -0.5, "Sink")
-    ax.text(-0.3, -1.5, "Source")
-    ax.text(-2, -0.5, "Saddle")
-    ax.text(2, -0.5, "Saddle")
-    ax.text(-3, 2, "Source")
-    ax.text(2.8, 2, "Source")
+    ax.text(0, -0.5, "Saddle")
+    ax.text(-2.5, 0.5, "Sink")
+    ax.text(2.5, 0.5, "Source")
+    ax.text(-0.8, 1.5, "Spiral sink")
+    ax.text(0.5, 1.5, "Spiral source")
 
     # Clean ax
     ax.spines["bottom"].set_color(grey)
@@ -68,9 +60,9 @@ def plot_fixed_point_classification(tr, det, ax=None):
         xticks=[-1, 1],
         yticks=[-1, 1],
     )
-    ax.set_xlabel("Tr", fontsize=12, color=[0.3, 0.3, 0.3])
+    ax.set_xlabel("Tr", fontsize=12, color=[0.2, 0.2, 0.2])
     ax.xaxis.set_label_coords(1, 0.48)
-    ax.set_ylabel("Det", fontsize=12, color=[0.3, 0.3, 0.3])
+    ax.set_ylabel("Det", fontsize=12, color=[0.2, 0.2, 0.2])
     ax.yaxis.set_label_coords(0.48, 0.975)
 
 
