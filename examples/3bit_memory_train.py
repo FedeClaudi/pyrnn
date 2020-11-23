@@ -7,7 +7,7 @@ sys.path.append("./")
 
 from pyrnn import RNN
 from pyrnn.plot import plot_training_loss
-from tasks.three_bit_memory import (
+from three_bit_memory import (
     ThreeBitDataset,
     plot_predictions,
 )

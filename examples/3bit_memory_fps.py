@@ -8,7 +8,7 @@ import sys
 sys.path.append("./")
 
 from pyrnn import RNN
-from tasks.three_bit_memory import (
+from three_bit_memory import (
     ThreeBitDataset,
     is_win,
     make_batch,

@@ -2,7 +2,7 @@ import os
 import sys
 
 sys.path.append("./")
-from tasks.three_bit_memory import make_batch
+from three_bit_memory import make_batch
 
 
 from pyrnn import RNN
