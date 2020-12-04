@@ -6,7 +6,9 @@ from myterial import amber_light, orange
 import numpy as np
 from pathlib import Path
 from einops import repeat
-
+from pyinspect import Report
+from io import StringIO
+from rich.console import Console
 
 from ._progress import base_progress
 from ._utils import npify
@@ -174,14 +176,27 @@ class RNNBase(nn.Module, Trainer):
 
         # Store params
         self.params = dict(
+            n_units=self.n_units,
             input_size=self.input_size,
             output_size=self.output_size,
-            n_units=self.n_units,
             dale_ratio=self.dale_ratio,
             autopses=self.autopses,
             connectivity=self.connectivity,
             on_gpu=on_gpu,
         )
+
+    def __rich_console__(self, *args, **kwargs):
+        rep = Report("RNN", color=amber_light, accent=orange)
+        for name, value in self.params.items():
+            rep.add(f"[{orange} bold]{name}[/{orange} bold]: {value}")
+        yield rep
+
+    def __str__(self):
+        buf = StringIO()
+        _console = Console(file=buf, force_jupyter=False)
+        _console.print(self)
+
+        return buf.getvalue()
 
     @classmethod
     def from_dict(cls, params):
