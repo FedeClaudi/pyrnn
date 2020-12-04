@@ -6,7 +6,7 @@ import sys
 from myterial import amber_light, orange, salmon
 from rich.table import Table
 
-from ._progress import train_progress
+from ._progress import train_progress, LiveLossPlot
 from ._utils import GracefulInterruptHandler
 
 is_win = sys.platform == "win32"
@@ -90,30 +90,32 @@ class Trainer:
 
         losses = []
         with GracefulInterruptHandler() as h:
-            with train_progress as progress:
-                tid = progress.add_task(
-                    "Training",
-                    start=True,
-                    total=n_epochs,
-                    loss=0,
-                    lr=lr,
-                )
-
-                # loop over epochs
-                for epoch in range(n_epochs + 1):
-                    self.on_epoch_start(self, epoch)
-                    epoch_loss, lr = self.run_epoch(*operators)
-
-                    train_progress.update(
-                        tid,
-                        completed=epoch,
-                        loss=epoch_loss,
+            with LiveLossPlot() as live_plot:
+                with train_progress as progress:
+                    tid = progress.add_task(
+                        "Training",
+                        start=True,
+                        total=n_epochs,
+                        loss=0,
                         lr=lr,
                     )
-                    losses.append((epoch, epoch_loss))
 
-                    if epoch_loss <= stop_loss or h.interrupted:
-                        break
+                    # loop over epochs
+                    for epoch in range(n_epochs + 1):
+                        self.on_epoch_start(self, epoch)
+                        epoch_loss, lr = self.run_epoch(*operators)
+
+                        train_progress.update(
+                            tid,
+                            completed=epoch,
+                            loss=epoch_loss,
+                            lr=lr,
+                        )
+                        losses.append((epoch, epoch_loss))
+                        live_plot.update([l[1] for l in losses])
+
+                        if epoch_loss <= stop_loss or h.interrupted:
+                            break
 
         # Make report about training process
         self.report(

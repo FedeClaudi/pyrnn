@@ -5,13 +5,55 @@ from rich.progress import (
     ProgressColumn,
 )
 from datetime import timedelta
-
+import matplotlib.pyplot as plt
 from rich.text import Text
-from myterial import orange, amber_light, teal_light, light_blue_light
+from myterial import (
+    orange,
+    amber_light,
+    teal_light,
+    light_blue_light,
+    blue_grey_dark,
+    salmon,
+)
+
+from pyrnn._plot import clean_axes
 
 """
-    Classes to create fancy progress bars
+    Classes to create fancy progress bars and live loss plotting
 """
+
+
+class LiveLossPlot:
+    def __init__(self):
+        return
+
+    def __enter__(self):
+        f, self.ax = plt.subplots(figsize=(14, 8))
+        clean_axes(f)
+        plt.ion()
+
+        return self
+
+    def _style(self, loss_history):
+        self.ax.set(
+            title="Training loss",
+            ylabel="Loss",
+            xlabel="Training epoch",
+            ylim=[0, 0.1 + max(loss_history)],
+        )
+
+    def update(self, loss_history):
+        self.ax.clear()
+        self.ax.plot(loss_history, lw=5, color=blue_grey_dark)
+        self.ax.plot(loss_history, lw=3, color=salmon)
+        self._style(loss_history)
+
+        plt.draw()
+        plt.pause(0.0001)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        plt.ioff()
+
 
 # ---------------------------------- Columns --------------------------------- #
 
