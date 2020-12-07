@@ -24,13 +24,14 @@ from pyrnn._plot import clean_axes
 
 
 class LiveLossPlot:
-    def __init__(self):
-        return
+    def __init__(self, show):
+        self.show = show
 
     def __enter__(self):
-        f, self.ax = plt.subplots(figsize=(14, 8))
-        clean_axes(f)
-        plt.ion()
+        if self.show:
+            f, self.ax = plt.subplots(figsize=(7, 4))
+            clean_axes(f)
+            plt.ion()
 
         return self
 
@@ -110,8 +111,8 @@ class LossColumn(TextColumn):
     def render(self, task):
         try:
             return f"[{amber_light}]loss: [bold {orange}]{task.fields['loss']:.6f}"
-        except AttributeError:
-            return "no loss"
+        except (AttributeError, TypeError):
+            return ""
 
 
 class LearningRateColumn(TextColumn):
@@ -123,8 +124,8 @@ class LearningRateColumn(TextColumn):
     def render(self, task):
         try:
             return f"[{amber_light}]lr: [bold {orange}]{task.fields['lr']:.6f}"
-        except AttributeError:
-            return "no lr"
+        except (AttributeError, TypeError):
+            return ""
 
 
 class FPSpeedColumn(TextColumn):

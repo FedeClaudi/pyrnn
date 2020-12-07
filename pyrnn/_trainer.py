@@ -16,15 +16,11 @@ is_win = sys.platform == "win32"
 
 def pad_pack_collate(batch):
     (xx, yy) = zip(*batch)
-    # x_lens = [len(x) for x in xx]
-    # y_lens = [len(y) for y in yy]
 
     x_padded = pad_sequence(xx, batch_first=True, padding_value=0)
     y_padded = pad_sequence(yy, batch_first=True, padding_value=0)
 
-    # x_packed = pack_padded_sequence(x_padded, x_lens, batch_first=True, enforce_sorted=False)
-    # y_packed = pack_padded_sequence(y_padded, y_lens, batch_first=True, enforce_sorted=False)
-    return x_padded, y_padded  # , x_lens, y_lens
+    return x_padded, y_padded
 
 
 # ---------------------------------------------------------------------------- #
@@ -50,6 +46,7 @@ class Trainer:
         stop_loss=None,
         report_path=None,
         num_workers=None,
+        plot_live=True,
         **kwargs,
     ):
         """
@@ -71,6 +68,7 @@ class Trainer:
             report_path (str, Path): path to a .txt file where the training report
                 will be saved.
             num_workers (int): number of workes used to load the dataset
+            plot_live: bool, default True. If true a live plot showing loss is shown
         """
         stop_loss = stop_loss or -1
         lr_milestones = lr_milestones or [100000000]
@@ -88,9 +86,9 @@ class Trainer:
             num_workers=num_workers,
         )
 
-        losses = []
+        losses, epoch_loss = [], None
         with GracefulInterruptHandler() as h:
-            with LiveLossPlot() as live_plot:
+            with LiveLossPlot(plot_live) as live_plot:
                 with train_progress as progress:
                     tid = progress.add_task(
                         "Training",
@@ -103,16 +101,20 @@ class Trainer:
                     # loop over epochs
                     for epoch in range(n_epochs + 1):
                         self.on_epoch_start(self, epoch)
-                        epoch_loss, lr = self.run_epoch(*operators)
 
-                        train_progress.update(
+                        progress.update(
                             tid,
                             completed=epoch,
                             loss=epoch_loss,
                             lr=lr,
                         )
+
+                        epoch_loss, lr = self.run_epoch(*operators, progress)
+
                         losses.append((epoch, epoch_loss))
-                        live_plot.update([l[1] for l in losses])
+
+                        if epoch > 0 and plot_live:
+                            live_plot.update([l[1] for l in losses])
 
                         if epoch_loss <= stop_loss or h.interrupted:
                             break
@@ -192,7 +194,7 @@ class Trainer:
 
         return loader, optimizer, scheduler, criterion
 
-    def run_epoch(self, loader, optimizer, scheduler, criterion):
+    def run_epoch(self, loader, optimizer, scheduler, criterion, progress):
         """
         Runs a single training epoch: iterates over
         batches, predicts each batch and computes epoch loss
@@ -209,7 +211,16 @@ class Trainer:
         """
         # Loop over batch samples
         epoch_loss = 0
+        bid = progress.add_task(
+            "Batches",
+            start=True,
+            total=len(loader) - 1,
+            loss=None,
+            lr=None,
+        )
+
         for batchn, batch in enumerate(loader):
+            progress.update(bid, completed=batchn)
             # initialise
             X, Y = batch
             h = self.on_batch_start(self, X, Y)
@@ -239,6 +250,8 @@ class Trainer:
 
             # update loss
             epoch_loss += loss.item()
+
+        progress.remove_task(bid)
         return epoch_loss, lr
 
     def report(
