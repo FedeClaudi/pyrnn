@@ -41,6 +41,13 @@ class LiveLossPlot:
             ylabel="Loss",
             xlabel="Training epoch",
             ylim=[0, 0.1 + max(loss_history)],
+            xticks=[0, np.argmin(loss_history), len(loss_history) - 1],
+            yticks=[
+                0,
+                round(np.min(loss_history), 4),
+                loss_history[-1],
+                round(np.max(loss_history), 4),
+            ],
         )
 
     def update(self, loss_history):
