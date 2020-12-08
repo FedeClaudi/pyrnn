@@ -8,6 +8,7 @@ from datetime import timedelta
 import matplotlib.pyplot as plt
 from rich.text import Text
 import numpy as np
+import time
 from myterial import (
     orange,
     amber_light,
@@ -33,8 +34,8 @@ class LiveLossPlot:
 
     def __enter__(self):
         if self.show:
-            f, self.ax = plt.subplots(figsize=(7, 4))
-            clean_axes(f)
+            self.f, self.ax = plt.subplots(figsize=(7, 4))
+            clean_axes(self.f)
             plt.ion()
 
         return self
@@ -44,7 +45,7 @@ class LiveLossPlot:
             title="Training loss",
             ylabel="Loss",
             xlabel="Training epoch",
-            ylim=[0, 0.1 + max(loss_history[1:])],
+            ylim=[0, max(loss_history[1:])],
             xticks=[0, np.argmin(loss_history), len(loss_history) - 1],
             yticks=[
                 0,
@@ -53,6 +54,10 @@ class LiveLossPlot:
                 round(np.max(loss_history[1:]), 4),
             ],
         )
+        self.ax.relim()  # recompute the data limits
+        self.ax.autoscale_view()  # automatic axis scaling
+        self.canvas.flush_events()  # update the plot and take care of window events (like resizing etc.)
+        time.sleep(0.00001)
 
     def update(self, loss_history):
         self.ax.clear()
@@ -68,10 +73,10 @@ class LiveLossPlot:
         )
         self._style(loss_history)
 
-        plt.draw()
-        fig = plt.gcf()
-        fig.canvas.draw()
-        plt.pause(0.0001)
+        # plt.draw()
+        # fig = plt.gcf()
+        # fig.canvas.draw()
+        # plt.pause(0.0001)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         plt.ioff()
