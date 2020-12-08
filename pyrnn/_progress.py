@@ -50,7 +50,7 @@ class LiveLossPlot:
                 0,
                 round(np.min(loss_history), 4),
                 loss_history[-1],
-                round(np.max(loss_history), 4),
+                round(np.max(loss_history[1:]), 4),
             ],
         )
 
