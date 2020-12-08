@@ -17,6 +17,10 @@ from myterial import (
 )
 
 from pyrnn._plot import clean_axes
+import matplotlib
+
+matplotlib.use("TkAgg")  # necessary for plt.ion on windows
+
 
 """
     Classes to create fancy progress bars and live loss plotting
@@ -65,6 +69,8 @@ class LiveLossPlot:
         self._style(loss_history)
 
         plt.draw()
+        fig = plt.gcf()
+        fig.canvas.draw()
         plt.pause(0.0001)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
