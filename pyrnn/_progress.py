@@ -7,12 +7,12 @@ from rich.progress import (
 from datetime import timedelta
 import matplotlib.pyplot as plt
 from rich.text import Text
+import numpy as np
 from myterial import (
     orange,
     amber_light,
     teal_light,
     light_blue_light,
-    blue_grey_dark,
     salmon,
 )
 
@@ -45,8 +45,16 @@ class LiveLossPlot:
 
     def update(self, loss_history):
         self.ax.clear()
-        self.ax.plot(loss_history, lw=5, color=blue_grey_dark)
         self.ax.plot(loss_history, lw=3, color=salmon)
+        self.ax.scatter(
+            np.argmin(loss_history),
+            np.min(loss_history),
+            color="w",
+            lw=2,
+            edgecolors=salmon,
+            s=200,
+            zorder=100,
+        )
         self._style(loss_history)
 
         plt.draw()
