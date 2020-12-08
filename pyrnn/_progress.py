@@ -44,7 +44,7 @@ class LiveLossPlot:
             title="Training loss",
             ylabel="Loss",
             xlabel="Training epoch",
-            ylim=[0, 0.1 + max(loss_history)],
+            ylim=[0, 0.1 + max(loss_history[1:])],
             xticks=[0, np.argmin(loss_history), len(loss_history) - 1],
             yticks=[
                 0,
