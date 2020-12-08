@@ -110,6 +110,8 @@ class Trainer:
                         )
 
                         epoch_loss, lr = self.run_epoch(*operators, progress)
+                        if epoch_loss is None:
+                            break
 
                         losses.append((epoch, epoch_loss))
 
@@ -219,37 +221,41 @@ class Trainer:
             lr=None,
         )
 
-        for batchn, batch in enumerate(loader):
-            progress.update(bid, completed=batchn)
-            # initialise
-            X, Y = batch
-            h = self.on_batch_start(self, X, Y)
+        with GracefulInterruptHandler() as handler:
+            for batchn, batch in enumerate(loader):
+                progress.update(bid, completed=batchn)
+                # initialise
+                X, Y = batch
+                h = self.on_batch_start(self, X, Y)
 
-            if self.on_gpu:
-                X, Y = X.cuda(0), Y.cuda(0)
-                h = h.cuda(0) if h is not None else h
+                if self.on_gpu:
+                    X, Y = X.cuda(0), Y.cuda(0)
+                    h = h.cuda(0) if h is not None else h
 
-            # zero gradient
-            optimizer.zero_grad()
+                # zero gradient
+                optimizer.zero_grad()
 
-            # predict
-            output, h = self(X, h=h)
+                # predict
+                output, h = self(X, h=h)
 
-            if self.on_gpu:
-                output, h = output.cuda(0), h.cuda(0)
+                if self.on_gpu:
+                    output, h = output.cuda(0), h.cuda(0)
 
-            # backprop + optimizer
-            loss = criterion(output, Y)
-            loss.backward(retain_graph=True)
+                # backprop + optimizer
+                loss = criterion(output, Y)
+                loss.backward(retain_graph=True)
 
-            optimizer.step()
-            scheduler.step()
+                optimizer.step()
+                scheduler.step()
 
-            # get current lr
-            lr = scheduler.get_last_lr()[-1]
+                # get current lr
+                lr = scheduler.get_last_lr()[-1]
 
-            # update loss
-            epoch_loss += loss.item()
+                # update loss
+                epoch_loss += loss.item()
+
+                if handler.interrupted:
+                    return None, None
 
         progress.remove_task(bid)
         return epoch_loss, lr

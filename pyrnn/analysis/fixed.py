@@ -160,10 +160,25 @@ class FixedPoint(object):
             # store the stability, eigenvalue and eigenvectors
             self.eigenmodes.append(eig_mode(stable, e_val, np.real(e_vec)))
 
+        # Check that FP is hyperbolic
+        self.check_hyperbolic()
+
         # count number of untable modes
         self.n_unstable_modes = np.sum(
             [1 for mode in self.eigenmodes if not mode.stable]
         ).astype(np.int32)
+
+    def check_hyperbolic(self):
+        """
+        Check that a fixed point is hyperbolic (Hartman-Groban theorem applies).
+        A FP is hyperbolic if all eigenvalues != 1:
+        https://en.wikipedia.org/wiki/Hyperbolic_equilibrium_point
+        """
+        if np.any([em.eigv == 1 for em in self.eigenmodes]):
+            print("Fixed point is not hyperbolic!")
+            return False
+        else:
+            return True
 
 
 class FixedPoints(object):
