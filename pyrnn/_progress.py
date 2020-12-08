@@ -37,6 +37,7 @@ class LiveLossPlot:
             self.f, self.ax = plt.subplots(figsize=(7, 4))
             clean_axes(self.f)
             plt.ion()
+            self.f.show()
 
         return self
 
@@ -56,7 +57,7 @@ class LiveLossPlot:
         )
         self.ax.relim()  # recompute the data limits
         self.ax.autoscale_view()  # automatic axis scaling
-        self.canvas.flush_events()  # update the plot and take care of window events (like resizing etc.)
+        self.f.canvas.flush_events()  # update the plot and take care of window events (like resizing etc.)
         time.sleep(0.00001)
 
     def update(self, loss_history):
@@ -70,6 +71,7 @@ class LiveLossPlot:
             edgecolors=salmon,
             s=200,
             zorder=100,
+            alpha=0.8,
         )
         self._style(loss_history)
 
