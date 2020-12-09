@@ -296,12 +296,6 @@ class Trainer:
         rep.add(tb, "rich")
         rep.spacer()
 
-        # Add training loss
-        rep.add(f"[bold {salmon}]Training losses")
-        for n, (epoch, loss) in enumerate(losses):
-            if n % 100 == 0 or n == 0:
-                rep.add(f"[bold dim]{epoch}: [/bold dim]{round(loss, 4)}")
-
         # Save and print
         if report_path is not None:
             srep = pi.utils.stringify(rep, maxlen=-1)

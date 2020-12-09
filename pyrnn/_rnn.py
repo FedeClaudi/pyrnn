@@ -198,6 +198,10 @@ class RNNBase(nn.Module, Trainer):
 
         return buf.getvalue()
 
+    def params_to_file(self, filepath):
+        with open(filepath, "w") as out:
+            out.write(str(self))
+
     @classmethod
     def from_dict(cls, params):
         """
