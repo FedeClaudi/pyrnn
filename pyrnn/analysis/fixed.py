@@ -174,7 +174,7 @@ class FixedPoint(object):
         A FP is hyperbolic if all eigenvalues != 1:
         https://en.wikipedia.org/wiki/Hyperbolic_equilibrium_point
         """
-        if np.any([em.eigv == 1 for em in self.eigenmodes]):
+        if np.any([np.abs(em.eigv) == 1 for em in self.eigenmodes]):
             print("Fixed point is not hyperbolic!")
             return False
         else:
