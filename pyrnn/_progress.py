@@ -20,7 +20,10 @@ from myterial import (
 from pyrnn._plot import clean_axes
 import matplotlib
 
-matplotlib.use("TkAgg")  # necessary for plt.ion on windows
+try:
+    matplotlib.use("TkAgg")  # necessary for plt.ion on windows
+except Exception:
+    pass
 
 
 """
