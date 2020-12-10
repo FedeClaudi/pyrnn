@@ -47,6 +47,7 @@ class Trainer:
         report_path=None,
         num_workers=None,
         plot_live=True,
+        logger=None,
         **kwargs,
     ):
         """
@@ -69,6 +70,8 @@ class Trainer:
                 will be saved.
             num_workers (int): number of workes used to load the dataset
             plot_live: bool, default True. If true a live plot showing loss is shown
+            logger: instance of loguru.logger with filter:  filter=lambda record: "training" in record["extra"]
+                see https://github.com/Delgan/loguru for more info
         """
         stop_loss = stop_loss or -1
         lr_milestones = lr_milestones or [100000000]
@@ -112,6 +115,11 @@ class Trainer:
                         epoch_loss, lr = self.run_epoch(*operators, progress)
                         if epoch_loss is None:
                             break
+
+                        if logger:
+                            logger.bind(training=True).info(
+                                f"Epoch {epoch} - loss: {epoch_loss:.6f} - lr: {lr:.6f}"
+                            )
 
                         losses.append((epoch, epoch_loss))
 

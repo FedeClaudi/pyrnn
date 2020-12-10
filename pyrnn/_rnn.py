@@ -237,14 +237,14 @@ class RNNBase(nn.Module, Trainer):
         """
         save_json(filepath, self.params)
 
-    def save(self, path):
+    def save(self, path, overwrite=False):
         """
         Save model to .pt file
         """
         if not path.endswith(".pt"):
             raise ValueError("Expected a path point to a .pt file")
         path = Path(path)
-        if path.exists():
+        if path.exists() and not overwrite:
             if not Confirm.ask(
                 f"{path.name} exists already, overwrite?", default=True
             ):
