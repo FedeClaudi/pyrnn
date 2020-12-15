@@ -254,7 +254,7 @@ class RNNBase(nn.Module, Trainer):
         torch.save(self.state_dict(), path)
 
     @classmethod
-    def load(cls, path, *args, **kwargs):
+    def load(cls, path, *args, load_kwargs={}, **kwargs):
         """
         Load model from .pt file
         """
@@ -263,7 +263,7 @@ class RNNBase(nn.Module, Trainer):
 
         print(f"[{amber_light}]Loading model from: [{orange}]{path}")
         model = cls(*args, **kwargs)
-        model.load_state_dict(torch.load(path))
+        model.load_state_dict(torch.load(path, **load_kwargs))
         model.eval()
         return model
 
