@@ -48,6 +48,8 @@ class Trainer:
         num_workers=None,
         plot_live=True,
         logger=None,
+        save_at_min_loss=False,
+        save_path=None,
         **kwargs,
     ):
         """
@@ -72,6 +74,10 @@ class Trainer:
             plot_live: bool, default True. If true a live plot showing loss is shown
             logger: instance of loguru.logger with filter:  filter=lambda record: "training" in record["extra"]
                 see https://github.com/Delgan/loguru for more info
+            save_at_min_loss: bool, default False. If true a path must have been passed to save_path.
+                If true the RNN is saved every time the lowest loss is achieved.
+            save_path: str, default None. If save_at_min_loss is true, use save_path to pass a path to save
+                the RNN at.
         """
         stop_loss = stop_loss or -1
         lr_milestones = lr_milestones or [100000000]
@@ -102,6 +108,7 @@ class Trainer:
                     )
 
                     # loop over epochs
+                    min_loss = 10000  # start with a very high value
                     for epoch in range(n_epochs + 1):
                         self.on_epoch_start(self, epoch)
 
@@ -120,6 +127,15 @@ class Trainer:
                             logger.bind(training=True).info(
                                 f"Epoch {epoch} - loss: {epoch_loss:.6f} - lr: {lr:.6f}"
                             )
+
+                        # save if it's the lowest loss so far
+                        if save_at_min_loss and epoch_loss < min_loss:
+                            if logger:
+                                logger.bind(training=True).info(
+                                    f"Epoch {epoch} - SAVING MODEL AT LOWEST LOSS. path: {save_path}"
+                                )
+                            self.save(save_path, overwrite=True)
+                            min_loss = epoch_loss
 
                         losses.append((epoch, epoch_loss))
 
