@@ -29,7 +29,7 @@ def get_n_components_with_pca(
         arr = flatten_h(arr)
 
     # Fit PCA and get number of components to reach variance
-    pca = PCA(n_components=n_units).fit(arr)
+    pca = PCA(n_components=n_units - 1).fit(arr)
     explained = np.cumsum(pca.explained_variance_ratio_)
     above = np.where(explained > variance_th)[0][0]
     at_above = explained[above]
@@ -68,5 +68,6 @@ def get_n_components_with_pca(
             ylabel="Fraction of variance explained",
         )
         clean_axes(f)
-
-    return above + 1
+    else:
+        f = None
+    return above + 1, f

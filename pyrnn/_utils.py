@@ -31,7 +31,10 @@ def npify(tensor, flatten=False):
     Turn a tensor into a numpy array
     """
     if not isinstance(tensor, np.ndarray):
-        tensor = tensor.detach().numpy()
+        try:
+            tensor = tensor.detach().numpy()
+        except TypeError:
+            tensor = tensor.detach().cpu().numpy()
 
     if flatten:
         ndims = len(tensor.shape)
