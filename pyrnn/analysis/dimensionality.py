@@ -1,9 +1,47 @@
-from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import numpy as np
 
 from pyrnn._utils import flatten_h
 from pyrnn._plot import clean_axes
+
+
+class PCA:
+    def __init__(self, n_components=2):
+        self.n_components = n_components
+        self.eigen_values, self.eigen_vectors = None, None
+
+    @property
+    def variance_explained(self):
+        tot = np.sum(self.eigen_values)
+        return np.array([eig / tot for eig in self.eigen_values])
+
+    def fit(self, X):
+        X = (X - np.mean(X, axis=0)) / np.std(X, axis=0)
+        covariance_matrix = np.cov(
+            X.T
+        )  # The result is a Positive semidefinite matrix
+        self.eigen_values, self.eigen_vectors = np.linalg.eig(
+            covariance_matrix
+        )
+
+        self.eigen_values = np.real(self.eigen_values)
+        self.eigen_vectors = np.real(self.eigen_vectors)
+
+        return self
+
+    def transform(self, X):
+        if self.eigen_values is None:
+            raise ValueError(
+                "You need to fit the PCA model to your data first"
+            )
+
+        projection_matrix = (self.eigen_vectors.T[:][: self.n_components]).T
+
+        return X.dot(projection_matrix)
+
+    def fit_transform(self, X):
+        self.fit(X)
+        return self.transform(X)
 
 
 def get_n_components_with_pca(
@@ -30,7 +68,7 @@ def get_n_components_with_pca(
 
     # Fit PCA and get number of components to reach variance
     pca = PCA(n_components=n_units - 1).fit(arr)
-    explained = np.cumsum(pca.explained_variance_ratio_)
+    explained = np.cumsum(pca.variance_explained)  # explained_variance_ratio_
     above = np.where(explained > variance_th)[0][0]
     at_above = explained[above]
 

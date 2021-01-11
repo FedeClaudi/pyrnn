@@ -1,10 +1,10 @@
 import numpy as np
 from vedo import show, Sphere, Tube
-from sklearn.decomposition import PCA
 from rich import print
 
 from ._plot import points_from_pc
 from ._utils import prepend_dim, flatten_h
+from .analysis.dimensionality import PCA
 
 from vedo import settings
 
@@ -77,11 +77,12 @@ def render_state_history_pca_3d(
         hidden_history (np.ndarray): array with history of hidden states
         lw (int): line weight of hidden state trace
         alpha(float): transparency of hidden state trace
-        color (str): color of hidden state trace
+        color (str): color of hidden state trace or list of colors (one per trial)
         _show (bool): if true the actors are rendered
         actors (list): a list of actors to add to the visualisation
         mark_start (bool): if true a spehere is added to
             mark the start of the hidden trace
+        color_by_trial: bool. If true and color is a list each trial is colored differently
 
     Returns:
         pca (PCA): PCA model fit to hidden history

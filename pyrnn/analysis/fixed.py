@@ -290,7 +290,7 @@ class FixedPoints(object):
             for n_cn, constant_input in enumerate(constant_inputs):
                 gamma = self.gamma
 
-                h = repeat(torchify(hid), "n i -> b n i", b=1)
+                h = repeat(torchify(hid), "i -> b n i", b=1, n=1)
                 h.requires_grad = True
                 h.retain_grad()
 
@@ -300,7 +300,7 @@ class FixedPoints(object):
                     _, _h = self.model(constant_input, h)
 
                     # Compute
-                    q = torch.norm(h - _h)
+                    q = torch.norm(h.cpu() - _h.cpu())
 
                     # Step
                     if q < self.speed_tol:

@@ -28,12 +28,12 @@ from pyrnn.render import (
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 # ----------------------------------- setup ---------------------------------- #
-EXTRACT = False
+EXTRACT = True
 CONNECTIVITY = False
 RENDER = True
 
 N = 2048
-batch_size = 128
+batch_size = 3
 
 constant_inputs = [
     repeat(torchify(np.zeros(3)), "i -> b n i", b=1, n=1),
