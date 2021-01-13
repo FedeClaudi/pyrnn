@@ -101,6 +101,8 @@ def render_state_history_pca_3d(
             col = color[trial]
         else:
             col = color
+        if col is None:
+            continue
 
         actors.append(Tube([p[0] for p in points], alpha=alpha, c=col, r=lw))
 

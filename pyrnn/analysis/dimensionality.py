@@ -6,16 +6,47 @@ from pyrnn._plot import clean_axes
 
 
 class PCA:
+    nans_array = (None,)
+
     def __init__(self, n_components=2):
         self.n_components = n_components
         self.eigen_values, self.eigen_vectors = None, None
 
+    def _remove_nans(self, X):
+        """
+        Removes nan values from data.
+        Returns a copy of the original array
+        """
+        self.nans_array = np.isnan(X)
+
+        _X = X.copy()
+        _X[self.nans_array] = 0
+        return _X
+
+    def _add_nans(self, X):
+        """
+        Adds nans back where self._remove_nans removed them.
+        Returns a modifed version of the original array, not a copu
+        """
+        if self.nans_array is not None:
+            X[self.nans_array] = np.nan
+            return X
+        else:
+            return X
+
     @property
     def variance_explained(self):
+        """
+        Get the fraction of variance explained by each eigenvalue
+        """
         tot = np.sum(self.eigen_values)
         return np.array([eig / tot for eig in self.eigen_values])
 
     def fit(self, X):
+        """
+        Fit a PCA embedding to input data X
+        """
+        X = self._remove_nans(X)
         X = (X - np.mean(X, axis=0)) / np.std(X, axis=0)
         covariance_matrix = np.cov(
             X.T
@@ -30,6 +61,10 @@ class PCA:
         return self
 
     def transform(self, X):
+        """
+        Transform some data based on a previously fit embedding
+        """
+        X = self._remove_nans(X)
         if self.eigen_values is None:
             raise ValueError(
                 "You need to fit the PCA model to your data first"
@@ -37,9 +72,12 @@ class PCA:
 
         projection_matrix = (self.eigen_vectors.T[:][: self.n_components]).T
 
-        return X.dot(projection_matrix)
+        return self._add_nans(X).dot(projection_matrix)
 
     def fit_transform(self, X):
+        """
+        Fit the embedding on some data and then transform them
+        """
         self.fit(X)
         return self.transform(X)
 
