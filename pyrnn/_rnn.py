@@ -9,6 +9,7 @@ from einops import repeat
 from pyinspect import Report
 from io import StringIO
 from rich.console import Console
+from loguru import logger
 
 from ._progress import base_progress
 from ._utils import npify
@@ -250,7 +251,7 @@ class RNNBase(nn.Module, Trainer):
             ):
                 print("Okay, not saving anything then")
                 return
-        print(f"[{amber_light}]Saving model at: [{orange}]{path}")
+        logger.info(f"[{amber_light}]Saving model at: [{orange}]{path}")
         torch.save(self.state_dict(), path)
 
     @classmethod
@@ -261,7 +262,7 @@ class RNNBase(nn.Module, Trainer):
         if not path.endswith(".pt"):
             raise ValueError("Expected a path point to a .pt file")
 
-        print(f"[{amber_light}]Loading model from: [{orange}]{path}")
+        logger.info(f"[{amber_light}]Loading model from: [{orange}]{path}")
         model = cls(*args, **kwargs)
         model.load_state_dict(torch.load(path, **load_kwargs))
         model.eval()
@@ -311,12 +312,12 @@ class RNNBase(nn.Module, Trainer):
 
         if self.on_gpu:
             if torch.cuda.is_available():
-                print(
+                logger.debug(
                     f"Running on GPU: {torch.cuda.get_device_name(torch.cuda.current_device())}"
                 )
                 self.cuda()
         else:
-            print("No GPU found")
+            logger.debug("No GPU found")
             self.on_gpu = False
 
     def _initialize_hidden(self, x, *args):
@@ -341,7 +342,7 @@ class RNNBase(nn.Module, Trainer):
             hidden_trace (np.ndarray): (n_trials, n_samples, n_units) 3d numpy array
                 with network's hidden state at each sample
         """
-        print(f"[{amber_light}]Predicting input step by step")
+        logger.debug(f"[{amber_light}]Predicting input step by step")
         seq_len = X.shape[1]
         n_trials = X.shape[0]
 

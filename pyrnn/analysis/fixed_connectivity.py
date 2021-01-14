@@ -1,6 +1,6 @@
 from scipy.spatial.distance import euclidean
 import numpy as np
-from rich import print
+from loguru import logger
 from rich.progress import track
 from myterial import amber_light, orange
 
@@ -161,7 +161,7 @@ class FixedPointsConnectivity(object):
             nx.DiGraph: directed graph showing connections
                 between FPS
         """
-        print(
+        logger.info(
             f"[{amber_light}]Extracting fixed points connectivity (",
             f"[{orange}]{self.n_initial_conditions}[/{orange}][{amber_light}] points)",
         )
@@ -195,7 +195,7 @@ class FixedPointsConnectivity(object):
                     connections[(start_fp, end_fp)] += 1
                     break
 
-        print(
+        logger.info(
             f"[{orange}]{len(outcomes)}[/{orange}][{amber_light}] initial conditions converged"
         )
         self.outcomes = outcomes

@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from rich import print
+from loguru import logger
 from myterial import amber_light, orange
 from scipy.spatial.distance import euclidean
 from collections import namedtuple
@@ -175,7 +175,7 @@ class FixedPoint(object):
         https://en.wikipedia.org/wiki/Hyperbolic_equilibrium_point
         """
         if np.any([np.abs(em.eigv) == 1 for em in self.eigenmodes]):
-            print("Fixed point is not hyperbolic!")
+            logger.info("Fixed point is not hyperbolic!")
             return False
         else:
             return True
@@ -357,7 +357,7 @@ class FixedPoints(object):
         # Flatten hidden
         hidden = flatten_h(hidden)
 
-        print(f"[{amber_light}]Looking for fixed points.")
+        logger.info(f"[{amber_light}]Looking for fixed points.")
         initial_conditions = self._get_initial_conditions(
             hidden, n_initial_conditions
         )
@@ -410,7 +410,7 @@ class FixedPoints(object):
                         break
 
         # Create instance of FixedPoint for each fixed point state found so far
-        print(
+        logger.info(
             f"[{amber_light}]Found [{orange}]{len(fixed_points)}[/{orange}] from [{orange}]{n_initial_conditions}[/{orange}] initial conditions"
         )
         if fixed_points:
@@ -427,7 +427,9 @@ class FixedPoints(object):
         """
         Saves the fixed points found to a .json file
         """
-        print(f"[{amber_light}]Saving fixed points at: [{orange}]{filepath}")
+        logger.info(
+            f"[{amber_light}]Saving fixed points at: [{orange}]{filepath}"
+        )
         save_json(filepath, [fp.to_dict() for fp in self.fixed_points])
 
     @staticmethod
@@ -435,7 +437,7 @@ class FixedPoints(object):
         """
         Load fixed points from a .json file
         """
-        print(
+        logger.info(
             f"[{amber_light}]Loading fixed points from: [{orange}]{filepath}"
         )
         data = load_json(filepath)

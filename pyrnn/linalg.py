@@ -1,5 +1,5 @@
 import numpy as np
-from rich import print
+from loguru import logger
 from myterial import (
     teal_dark,
     light_blue,
@@ -22,7 +22,7 @@ def classify_equilibrium(eigenvalues):
         equilibrium = "attractor"
     else:
         if np.any(real == 1):
-            print(
+            logger.warning(
                 f"[{orange}]Some eigenvalues have purely immaginary components. "
                 "They could be centers if the conditions for the Harman-Grobman "
                 "theorem are met."
@@ -54,7 +54,7 @@ def get_eigs(arr):
     eigv, eigvecs = np.linalg.eig(arr)
 
     if len(set(eigv)) < len(eigv):
-        print(f"[{orange}]Found repeated eigenvalues!")
+        logger.warning(f"[{orange}]Found repeated eigenvalues!")
 
     # Sort by eigv
     sort_idx = np.argsort(eigv)

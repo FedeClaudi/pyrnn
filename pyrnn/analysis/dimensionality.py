@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from loguru import logger
 
 from pyrnn._utils import flatten_h
 from pyrnn._plot import clean_axes
@@ -46,6 +47,9 @@ class PCA:
         """
         Fit a PCA embedding to input data X
         """
+        logger.debug(
+            f"Fitting PCA with {self.n_components} components on array with shape: {X.shape}"
+        )
         X = self._remove_nans(X)
         X = (X - np.mean(X, axis=0)) / np.std(X, axis=0)
         covariance_matrix = np.cov(

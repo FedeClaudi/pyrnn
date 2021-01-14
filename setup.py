@@ -15,6 +15,7 @@ requirements = [
     "networkx",
     "myterial",
     "einops",
+    "loguru",
 ]
 
 setup(

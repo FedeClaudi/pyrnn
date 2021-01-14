@@ -1,6 +1,6 @@
 import numpy as np
 from vedo import show, Sphere, Tube
-from rich import print
+from loguru import logger
 
 from ._plot import points_from_pc
 from ._utils import prepend_dim, flatten_h
@@ -29,7 +29,7 @@ def render(actors, _show=True, axes=0):
         act.computeNormals()
 
     if _show:
-        print("[green]Render ready")
+        logger.info("[green]Render ready")
         show(*actors, axes=axes, size="full")
 
 
@@ -68,6 +68,7 @@ def render_state_history_pca_3d(
     start_color="k",
     axes=0,
     color_by_trial=False,
+    pca=None,
 ):
     """
     Fits a PCA to high dim hidden state history
@@ -91,7 +92,7 @@ def render_state_history_pca_3d(
     hh = flatten_h(hidden_history)
     actors = actors or []
 
-    pca = PCA(n_components=3).fit(hh)
+    pca = pca or PCA(n_components=3).fit(hh)
 
     for trial in np.arange(hidden_history.shape[0]):
         pc = pca.transform(hidden_history[trial, :, :])
