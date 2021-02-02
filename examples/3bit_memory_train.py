@@ -20,7 +20,7 @@ FIT = True
 n_units = 64
 N = 48  # trials length in dataset
 batch_size = 256
-epochs = 2000
+epochs = 1000
 lr_milestones = [1000, 2000]
 lr = 50
 
@@ -31,25 +31,27 @@ dataset = ThreeBitDataset(N, dataset_length=256)
 rnn = RNN(
     input_size=3,
     output_size=3,
-    autopses=False,
-    dale_ratio=0.8,
+    autopses=True,
+    dale_ratio=None,
     n_units=n_units,
-    on_gpu=True,
+    on_gpu=False,
+    w_in_train=True,
+    w_out_train=True,
 )
 
-loss_history = rnn.fit(
-    dataset,
-    N,
-    n_epochs=epochs,
-    lr=lr,
-    batch_size=batch_size,
-    input_length=N,
-    lr_milestones=lr_milestones,
-    l2norm=0,
-    # report_path="./3bit_memory.txt",
-)
-rnn.save("./3bit_memory.pt")
+if FIT:
+    loss_history = rnn.fit(
+        dataset,
+        N,
+        n_epochs=epochs,
+        lr=lr,
+        batch_size=batch_size,
+        input_length=N,
+        lr_milestones=lr_milestones,
+        l2norm=0,
+    )
+    rnn.save("./3bit_memory.pt")
+    plot_training_loss(loss_history)
 
 plot_predictions(rnn, N, batch_size)
-plot_training_loss(loss_history)
 plt.show()
