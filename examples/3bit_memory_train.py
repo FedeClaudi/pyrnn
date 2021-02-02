@@ -5,7 +5,7 @@ import sys
 
 sys.path.append("./")
 
-from pyrnn import RNN
+from pyrnn import CTRNN as RNN
 from pyrnn.plot import plot_training_loss
 from three_bit_memory import (
     ThreeBitDataset,
@@ -18,15 +18,15 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 FIT = True
 
 n_units = 64
-N = 64
+N = 48  # trials length in dataset
 batch_size = 256
-epochs = 700
-lr_milestones = [500, 800]
-lr = 0.005
+epochs = 2000
+lr_milestones = [1000, 2000]
+lr = 50
 
 # ---------------------------------- Fit RNN --------------------------------- #
 
-dataset = ThreeBitDataset(N, dataset_length=64)
+dataset = ThreeBitDataset(N, dataset_length=256)
 
 rnn = RNN(
     input_size=3,
@@ -34,7 +34,7 @@ rnn = RNN(
     autopses=False,
     dale_ratio=0.8,
     n_units=n_units,
-    on_gpu=False,
+    on_gpu=True,
 )
 
 loss_history = rnn.fit(

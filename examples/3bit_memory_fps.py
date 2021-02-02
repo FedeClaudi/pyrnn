@@ -28,11 +28,11 @@ from pyrnn.render import (
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 # ----------------------------------- setup ---------------------------------- #
-EXTRACT = True
+EXTRACT = False
 CONNECTIVITY = False
 RENDER = True
 
-N = 2048
+N = 1024
 batch_size = 3
 
 constant_inputs = [
@@ -62,21 +62,25 @@ if EXTRACT:
         n_initial_conditions=150,
         max_iters=9000,
         lr_decay_epoch=1500,
-        max_fixed_points=27,
+        max_fixed_points=27,  # 27
         gamma=0.1,
     )
 
     fp_finder.save_fixed_points("./3bit_fps.json")
 
 # ----------------------------------- Plot ----------------------------------- #
-fps = FixedPoints.load_fixed_points("./3bit_fps.json")
-list_fixed_points(fps)
+try:
+    fps = FixedPoints.load_fixed_points("./3bit_fps.json")
+    list_fixed_points(fps)
+except Exception:
+    fps = []
+
 if RENDER:
     X, Y = make_batch(6000)
     _, _h = rnn.predict_with_history(X)
 
     render_fixed_points(
-        _h, fps, alpha=0.005, scale=1, lw=0.2, sequential=False
+        _h, fps, alpha=0.03, scale=1, lw=0.01, sequential=False
     )
 
 # ----------------------------- fps connectivity ----------------------------- #

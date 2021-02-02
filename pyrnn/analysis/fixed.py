@@ -118,15 +118,17 @@ class FixedPoint(object):
         h.requires_grad = True
 
         _o, _h = self.model(self.constant_input, h)
+        _h = repeat(_h, "n i -> b n i", b=1).cuda()
+
         # Loop over each dimension of the hidden state vector
         for i in range(n_units):
             output = torch.zeros(1, 1, n_units)
             output[0, 0, i] = 1
 
             g = torch.autograd.grad(
-                _h, h, grad_outputs=output, retain_graph=True
+                _h, h, grad_outputs=output.cuda(), retain_graph=True
             )[0]
-            jacobian[:, i : i + 1] = repeat(g[0, 0, :], "i -> n i", n=1)
+            jacobian[:, i : i + 1] = repeat(g, "i -> i n", n=1)
 
         self.jacobian = jacobian.numpy()
 
@@ -213,6 +215,13 @@ class FixedPoints(object):
         self.speed_tol = speed_tol
         self.dist_th = dist_th
         self.noise_scale = noise_scale or 0.0
+
+        logger.debug(
+            "Fixed point parameters:\n"
+            f"   {speed_tol} speed tolerance\n"
+            f"   {dist_th} distance tolerance\n"
+            f"   {self.noise_scale} noise scale"
+        )
 
         self.model = model
 
@@ -360,6 +369,15 @@ class FixedPoints(object):
         logger.info(f"[{amber_light}]Looking for fixed points.")
         initial_conditions = self._get_initial_conditions(
             hidden, n_initial_conditions
+        )
+
+        logger.debug(
+            "Fixed points finder params:\n"
+            f"   {n_initial_conditions} n_initial_conditions\n"
+            f"   {max_iters} max_iters\n"
+            f"   {lr_decay_epoch} lr_decay_epoch\n"
+            f"   {max_fixed_points} max_fixed_points\n"
+            f"   {gamma} gamma"
         )
 
         fixed_points = []

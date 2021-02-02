@@ -51,10 +51,10 @@ class PCA:
             f"Fitting PCA with {self.n_components} components on array with shape: {X.shape}"
         )
         X = self._remove_nans(X)
-        X = (X - np.mean(X, axis=0)) / np.std(X, axis=0)
-        covariance_matrix = np.cov(
-            X.T
-        )  # The result is a Positive semidefinite matrix
+
+        # normalize the data
+        # X = (X - np.mean(X, axis=0)) / np.std(X, axis=0)
+        covariance_matrix = np.cov(X.T)
         self.eigen_values, self.eigen_vectors = np.linalg.eig(
             covariance_matrix
         )

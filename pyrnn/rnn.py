@@ -9,7 +9,7 @@ from ._rnn import RNNBase
 
 class RNN(RNNBase):
     r"""
-    Cusom RNN class. Unlike RNN above it doesn't use
+    Custom RNN class. Unlike TorchRNN it doesn't use
     pytorch's RNN class but builds similar functionality
     using linear layers.
 
@@ -20,7 +20,7 @@ class RNN(RNNBase):
         o_{t} = W_{out} h_{t}
 
     """
-    activation = nn.Tanh()
+    sigma = nn.Tanh()
 
     def __init__(
         self,
@@ -134,7 +134,111 @@ class RNN(RNNBase):
         nbatch, length, ninp = x.shape
         out = torch.zeros(length, nbatch, self.output_size)
         for t in range(length):
-            h = self.activation(self.w_rec(h) + self.w_in(x[:, t, :]))
+            h = self.sigma(self.w_rec(h) + self.w_in(x[:, t, :]))
+
+            out[t, :, :] = self.w_out(h)
+
+        return out.permute(1, 0, 2), h
+
+
+class CTRNN(RNN):
+    r"""
+    Custom RNN class for continuous time RNN.
+
+    The hidden state is updated given:
+        \tau \dot{h}_{t}= W_{in} * x_{t} + W_{rec} \sigma(h_{t-1}) + b_{rec})
+
+    and the output is given by:
+        o_{t} = W_{out} h_{t}
+
+    """
+    sigma = nn.Tanh()
+
+    def __init__(
+        self,
+        input_size=1,
+        output_size=1,
+        n_units=50,
+        dale_ratio=None,
+        autopses=True,
+        connectivity=None,
+        w_in_bias=False,
+        w_in_train=False,
+        w_out_bias=False,
+        w_out_train=False,
+        on_gpu=False,
+        dt=0.005,
+        tau=100,
+    ):
+        """
+        Implements custom RNN.
+
+        Arguments:
+            input_size (int): number of inputs
+            output_size (int): number of outputs
+            n_units (int): number of units in RNN layer
+            dale_ratio (float): percentage of excitatory units.
+                Use None to ignore
+            autopses (bool): pass False to remove autopses from
+                recurrent weights
+            connectivity (): not implemented yet
+            w_in_bias/w_out_bias (bool): if True in/out linear
+                layers will have a bias
+            w_in_train/w_out_train (bool): if True in/out linear
+                layers will be trained
+            on_gpu (bool): if true computation is carried out on a GPU
+            dt: int. Time interval between two consecutive samples
+            tau: int. Time constant of the network's hidden dynamics
+
+        """
+        # Initialize base RNN class
+        RNN.__init__(
+            self,
+            input_size=input_size,
+            output_size=output_size,
+            n_units=n_units,
+            dale_ratio=dale_ratio,
+            autopses=autopses,
+            connectivity=connectivity,
+            on_gpu=on_gpu,
+        )
+
+        self.tau, self.dt = tau, dt
+
+        self.params.update(
+            dict(
+                tau=self.tau,
+                dt=self.dt,
+            )
+        )
+
+    def forward(self, x, h=None):
+        """
+        Specifies how the forward dynamics of the network are computed
+
+        Arguments:
+            x (np.ndarray): network's input
+            h (torch tensor) tensor with initial hidden state.
+                If None the state is initialized as 0s.
+
+        Returns:
+            out (np.ndarray): the network's output
+            h (torch tensor): updated hidden stae
+        """
+        if h is None:
+            h = self._initialize_hidden(x)
+
+        if self.on_gpu:
+            h = h.cuda(0)
+
+        # Compute hidden
+        nbatch, length, ninp = x.shape
+        out = torch.zeros(length, nbatch, self.output_size)
+        for t in range(length):
+            hdot = (
+                -h + self.w_rec(self.sigma(h)) + self.w_in(x[:, t, :])
+            ) / self.tau
+            h = h + self.dt * hdot
 
             out[t, :, :] = self.w_out(h)
 
