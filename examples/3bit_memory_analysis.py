@@ -21,7 +21,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 # ---------------------------------- Set up ---------------------------------- #
 
-n_units = 64
+n_units = 128
 N = 5000
 rnn = RNN.load(
     "./3bit_memory.pt", n_units=n_units, input_size=3, output_size=3

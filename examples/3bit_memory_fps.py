@@ -39,7 +39,7 @@ constant_inputs = [
     repeat(torchify(np.zeros(3)), "i -> b n i", b=1, n=1),
 ]
 
-rnn = RNN.load("./3bit_memory.pt", n_units=64, input_size=3, output_size=3)
+rnn = RNN.load("./3bit_memory.pt", n_units=128, input_size=3, output_size=3)
 
 dataloader = torch.utils.data.DataLoader(
     ThreeBitDataset(N, dataset_length=batch_size),
