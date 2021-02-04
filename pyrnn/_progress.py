@@ -15,6 +15,7 @@ from myterial import (
     teal_light,
     light_blue_light,
     salmon,
+    green,
 )
 
 from pyrnn._plot import clean_axes
@@ -37,14 +38,15 @@ class LiveLossPlot:
 
     def __enter__(self):
         if self.show:
-            self.f, self.ax = plt.subplots(figsize=(7, 4))
+            self.f, axarr = plt.subplots(figsize=(14, 7), nrows=2)
+            self.ax, self.ax2 = axarr
             clean_axes(self.f)
             plt.ion()
             self.f.show()
 
         return self
 
-    def _style(self, loss_history):
+    def _style(self, loss_history, lrates):
         self.ax.set(
             title="Training loss",
             ylabel="Loss",
@@ -60,10 +62,20 @@ class LiveLossPlot:
         )
         self.ax.relim()  # recompute the data limits
         self.ax.autoscale_view()  # automatic axis scaling
+
+        self.ax2.set(
+            title="Learning rate",
+            ylabel="LR",
+            xlabel="Training epoch",
+            ylim=[0, max(lrates[1:])],
+            xticks=[0, len(loss_history) - 1],
+        )
+        self.ax2.relim()  # recompute the data limits
+        self.ax2.autoscale_view()  # automatic axis scaling
         self.f.canvas.flush_events()  # update the plot and take care of window events (like resizing etc.)
         time.sleep(0.00001)
 
-    def update(self, loss_history):
+    def update(self, loss_history, lrates):
         self.ax.clear()
         self.ax.plot(loss_history, lw=3, color=salmon)
         self.ax.scatter(
@@ -76,12 +88,11 @@ class LiveLossPlot:
             zorder=100,
             alpha=0.8,
         )
-        self._style(loss_history)
 
-        # plt.draw()
-        # fig = plt.gcf()
-        # fig.canvas.draw()
-        # plt.pause(0.0001)
+        self.ax2.clear()
+        self.ax2.plot(lrates, lw=3, color=green)
+
+        self._style(loss_history, lrates)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         plt.ioff()

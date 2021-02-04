@@ -5,7 +5,7 @@ sys.path.append("./")
 from three_bit_memory import make_batch
 
 
-from pyrnn import RNN
+from pyrnn import CTRNN as RNN
 from pyrnn.analysis.dimensionality import get_n_components_with_pca
 from pyrnn.analysis import FixedPoints, list_fixed_points
 from pyrnn.plot import (

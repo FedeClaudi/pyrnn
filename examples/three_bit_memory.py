@@ -6,6 +6,7 @@ from myterial import salmon, light_green_dark, indigo_light
 from pyrnn._plot import clean_axes
 import torch.utils.data as data
 import sys
+from rich.progress import track
 
 """
     3 bit memory task
@@ -32,48 +33,65 @@ class ThreeBitDataset(data.Dataset):
         self.sequence_length = sequence_length
         self.dataset_length = dataset_length
 
+        self.make_trials()
+
     def __len__(self):
         return self.dataset_length
 
-    def __getitem__(self, item):
+    def make_trials(self):
+        """
+        Generate the set of trials to be used fpr traomomg
+        """
         seq_len = self.sequence_length
-        X_batch = torch.zeros((seq_len, 3))
-        Y_batch = torch.zeros((seq_len, 3))
 
-        for m in range(3):
-            # Define input
-            X = torch.zeros(seq_len)
-            Y = torch.zeros(seq_len)
+        self.items = {}
+        for i in track(
+            range(self.dataset_length * 2),
+            description="Generating data...",
+            total=self.dataset_length * 2,
+            transient=True,
+        ):
+            X_batch = torch.zeros((seq_len, 3))
+            Y_batch = torch.zeros((seq_len, 3))
 
-            flips = (rnd.uniform(1, seq_len - 1, int(seq_len / 20))).astype(
-                np.int32
-            )
-            flips2 = (rnd.uniform(1, seq_len - 1, int(seq_len / 20))).astype(
-                np.int32
-            )
+            for m in range(3):
+                # Define input
+                X = torch.zeros(seq_len)
+                Y = torch.zeros(seq_len)
 
-            X[flips] = 1
-            X[flips2] = -1
-            X[0] = 1
+                flips = (
+                    rnd.uniform(1, seq_len - 1, int(seq_len / 200))
+                ).astype(np.int32)
+                flips2 = (
+                    rnd.uniform(1, seq_len - 1, int(seq_len / 200))
+                ).astype(np.int32)
 
-            # Get correct output
-            state = 0
-            for n, x in enumerate(X):
-                if x == 1:
-                    state = 1
-                elif x == -1:
-                    state = -1
+                X[flips] = 1
+                X[flips2] = -1
+                X[0] = 1
 
-                Y[n] = state
+                # Get correct output
+                state = 0
+                for n, x in enumerate(X):
+                    if x == 1:
+                        state = 1
+                    elif x == -1:
+                        state = -1
 
-            # RNN input: batch size * seq len * n_input
-            X = X.reshape(1, seq_len, 1)
+                    Y[n] = state
 
-            # out shape = (batch, seq_len, num_directions * hidden_size)
-            Y = Y.reshape(1, seq_len, 1)
+                # RNN input: batch size * seq len * n_input
+                X = X.reshape(1, seq_len, 1)
 
-            X_batch[:, m] = X.squeeze()
-            Y_batch[:, m] = Y.squeeze()
+                # out shape = (batch, seq_len, num_directions * hidden_size)
+                Y = Y.reshape(1, seq_len, 1)
+
+                X_batch[:, m] = X.squeeze()
+                Y_batch[:, m] = Y.squeeze()
+            self.items[i] = (X_batch, Y_batch)
+
+    def __getitem__(self, item):
+        X_batch, Y_batch = self.items[item]
 
         return X_batch, Y_batch
 

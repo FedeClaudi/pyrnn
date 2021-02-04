@@ -6,7 +6,6 @@ import sys
 sys.path.append("./")
 
 from pyrnn import CTRNN as RNN
-from pyrnn.plot import plot_training_loss
 from three_bit_memory import (
     ThreeBitDataset,
     plot_predictions,
@@ -15,18 +14,18 @@ from three_bit_memory import (
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 # ---------------------------------- Params ---------------------------------- #
-FIT = False
+FIT = True
 
-n_units = 128
-N = 48  # trials length in dataset
+n_units = 64
+N = 2048  # trials length in dataset
 batch_size = 256
-epochs = 5000
-lr_milestones = [1000, 2000, 4000]
-lr = 0.02
+epochs = 2000
+lr_milestones = None  # [1000, 2000, 5000, 6000]
+lr = 0.0025
 
 # ---------------------------------- Fit RNN --------------------------------- #
 
-dataset = ThreeBitDataset(N, dataset_length=256)
+dataset = ThreeBitDataset(N, dataset_length=128)
 
 
 if FIT:
@@ -36,7 +35,7 @@ if FIT:
         autopses=True,
         dale_ratio=None,
         n_units=n_units,
-        on_gpu=FIT,
+        on_gpu=False,
         w_in_train=True,
         w_out_train=True,
         tau=50,
@@ -52,12 +51,13 @@ if FIT:
         input_length=N,
         lr_milestones=lr_milestones,
         l2norm=0,
+        save_at_min_loss=True,
+        save_path="./3bit_memory_minloss.pt",
     )
     rnn.save("./3bit_memory.pt")
-    plot_training_loss(loss_history)
-else:
+
     rnn = RNN.load(
-        "./3bit_memory.pt",
+        "./3bit_memory_minloss.pt",
         input_size=3,
         output_size=3,
         autopses=True,
@@ -67,6 +67,21 @@ else:
         w_in_train=True,
         w_out_train=True,
         tau=50,
+        dt=5,
+    )
+else:
+    rnn = RNN.load(
+        "./3bit_memory_minloss.pt",
+        input_size=3,
+        output_size=3,
+        autopses=True,
+        dale_ratio=None,
+        n_units=n_units,
+        on_gpu=FIT,
+        w_in_train=True,
+        w_out_train=True,
+        tau=50,
+        dt=5,
     )
 plot_predictions(rnn, N, batch_size)
 plt.show()

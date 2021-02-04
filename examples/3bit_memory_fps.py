@@ -7,7 +7,7 @@ import sys
 
 sys.path.append("./")
 
-from pyrnn import RNN
+from pyrnn import CTRNN as RNN
 from three_bit_memory import (
     ThreeBitDataset,
     is_win,
@@ -39,7 +39,7 @@ constant_inputs = [
     repeat(torchify(np.zeros(3)), "i -> b n i", b=1, n=1),
 ]
 
-rnn = RNN.load("./3bit_memory.pt", n_units=128, input_size=3, output_size=3)
+rnn = RNN.load("./3bit_memory.pt", n_units=64, input_size=3, output_size=3)
 
 dataloader = torch.utils.data.DataLoader(
     ThreeBitDataset(N, dataset_length=batch_size),
@@ -76,12 +76,10 @@ except Exception:
     fps = []
 
 if RENDER:
-    X, Y = make_batch(6000)
+    X, Y = make_batch(50000)
     _, _h = rnn.predict_with_history(X)
 
-    render_fixed_points(
-        _h, fps, alpha=0.03, scale=1, lw=0.01, sequential=False
-    )
+    render_fixed_points(_h, fps, alpha=0.01, scale=1, lw=0.1, sequential=False)
 
 # ----------------------------- fps connectivity ----------------------------- #
 if CONNECTIVITY:

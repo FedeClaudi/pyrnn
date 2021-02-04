@@ -95,7 +95,7 @@ class Trainer:
             num_workers=num_workers,
         )
 
-        losses, epoch_loss = [], None
+        losses, epoch_loss, lrates = [], None, []
         with GracefulInterruptHandler() as h:
             with LiveLossPlot(plot_live) as live_plot:
                 with train_progress as progress:
@@ -138,9 +138,10 @@ class Trainer:
                             min_loss = epoch_loss
 
                         losses.append((epoch, epoch_loss))
+                        lrates.append(lr)
 
                         if epoch > 0 and plot_live:
-                            live_plot.update([l[1] for l in losses])
+                            live_plot.update([l[1] for l in losses], lrates)
 
                         if epoch_loss <= stop_loss or h.interrupted:
                             break

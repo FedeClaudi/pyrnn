@@ -235,13 +235,13 @@ class CTRNN(RNN):
         nbatch, length, ninp = x.shape
         out = torch.zeros(length, nbatch, self.output_size)
         for t in range(length):
-            activations = self.sigma(h)
-            hdot = (
-                -h + self.w_rec(activations) + self.w_in(x[:, t, :])
-            ) / self.tau
+            # activations = self.sigma(h)
             # hdot = (
-            #     -h + self.sigma(self.w_rec(h) + self.w_in(x[:, t, :]))
+            #     -h + self.w_rec(activations) + self.w_in(x[:, t, :])
             # ) / self.tau
+            hdot = (
+                -h + self.sigma(self.w_rec(h) + self.w_in(x[:, t, :]))
+            ) / self.tau
             h = h + self.dt * hdot
 
             out[t, :, :] = self.w_out(h)
