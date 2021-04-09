@@ -16,6 +16,7 @@ requirements = [
     "myterial",
     "einops",
     "loguru",
+    "vedo",
 ]
 
 setup(
