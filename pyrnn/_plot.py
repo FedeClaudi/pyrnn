@@ -1,5 +1,23 @@
 import seaborn as sns
 import math
+import matplotlib.pyplot as plt
+from matplotlib import gridspec
+from collections import namedtuple
+
+
+def create_triplot(**kwargs):
+    """
+    Creates a figure with one main plot and two plots on the sides
+    """
+    fig = plt.figure(**kwargs)
+    gs = gridspec.GridSpec(2, 2, width_ratios=[4, 1], height_ratios=[1, 4])
+    ax0 = plt.subplot(gs[1, 0])
+    ax1 = plt.subplot(gs[0, 0])
+    ax2 = plt.subplot(gs[1, 1])
+    plt.tight_layout()
+
+    axes = namedtuple("axes", "main top right")
+    return fig, axes(ax0, ax1, ax2)
 
 
 def center_axes(ax):

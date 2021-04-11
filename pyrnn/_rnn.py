@@ -63,8 +63,8 @@ class RecurrentWeightsInitializer(object):
                 specifying which proportion of units should be excitatory
             autopses (bool): if False autopses are removed from weights
                 (diagonal elements on weights matrix)
-            connectivity (): not yet implemented: will be used to contraint
-                connectivity among unnits
+            connectivity: np.array of shape n_units x n_units with connectivity
+                constraints for the recurrent layer
         """
         self.weights = initial_weights
         self.connectivity = np.ones_like(self.weights)
@@ -139,6 +139,8 @@ class RNNBase(nn.Module, Trainer):
         dale_ratio=None,
         autopses=True,
         connectivity=None,
+        input_connectivity=None,
+        output_connectivity=None,
         on_gpu=False,
     ):
         """
@@ -156,7 +158,12 @@ class RNNBase(nn.Module, Trainer):
                 Use None to ignore
             autopses (bool): pass False to remove autopses from
                 recurrent weights
-            connectivity (): not implemented yet
+            connectivity: np.array of shape n_units x n_units with connectivity
+                constraints for the recurrent layer
+            input_connectivity: np.array fo shape n_units x n_inputs with connectivity
+                constraints for the input layer
+            output_connectivity: np.array of shape n_units x n_outputs with connectivity
+                constraints for output layer
             on_gpu (bool): if true computation is carried out on a GPU
         """
         super(RNNBase, self).__init__()
@@ -171,12 +178,21 @@ class RNNBase(nn.Module, Trainer):
         self.dale_ratio = dale_ratio
         self.autopses = autopses
         self.connectivity = connectivity
+        self.input_connectivity = input_connectivity
+        self.output_connectivity = output_connectivity
 
-        # connectivity constraint used to fix weights during training
-        if connectivity is not None:
-            self.connectivity_constraint = connectivity.astype(np.float32)
-        else:
-            self.connectivity_constraint = None
+        # connectivity constraints used to fix weights during training
+        self.connectivity_constraints = {}
+        for name, constraint in zip(
+            ("input", "recurrent", "output"),
+            (input_connectivity, connectivity, output_connectivity),
+        ):
+            if constraint is not None:
+                self.connectivity_constraints[name] = constraint.astype(
+                    np.float32
+                )
+            else:
+                self.connectivity_constraints[name] = None
 
         # recurrent weights are not definite yet
         self._is_built = False
@@ -194,6 +210,8 @@ class RNNBase(nn.Module, Trainer):
             dale_ratio=self.dale_ratio,
             autopses=self.autopses,
             connectivity=self.connectivity,
+            input_connectivity=input_connectivity,
+            output_connectivity=output_connectivity,
             on_gpu=on_gpu,
         )
 

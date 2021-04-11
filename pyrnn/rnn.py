@@ -30,6 +30,8 @@ class RNN(RNNBase):
         dale_ratio=None,
         autopses=True,
         connectivity=None,
+        input_connectivity=None,
+        output_connectivity=None,
         w_in_bias=False,
         w_in_train=False,
         w_out_bias=False,
@@ -47,7 +49,12 @@ class RNN(RNNBase):
                 Use None to ignore
             autopses (bool): pass False to remove autopses from
                 recurrent weights
-            connectivity (): not implemented yet
+            connectivity: np.array of shape n_units x n_units with connectivity
+                constraints for the recurrent layer
+            input_connectivity: np.array fo shape n_units x n_inputs with connectivity
+                constraints for the input layer
+            output_connectivity: np.array of shape n_units x n_outputs with connectivity
+                constraints for output layer
             w_in_bias/w_out_bias (bool): if True in/out linear
                 layers will have a bias
             w_in_train/w_out_train (bool): if True in/out linear
@@ -64,6 +71,8 @@ class RNN(RNNBase):
             dale_ratio=dale_ratio,
             autopses=autopses,
             connectivity=connectivity,
+            input_connectivity=input_connectivity,
+            output_connectivity=output_connectivity,
             on_gpu=on_gpu,
         )
         self.w_in_bias = w_in_bias
@@ -75,6 +84,19 @@ class RNN(RNNBase):
         self.w_in = nn.Linear(input_size, n_units, bias=w_in_bias)
         self.w_rec = nn.Linear(n_units, n_units, bias=True)
         self.w_out = nn.Linear(n_units, output_size, bias=w_out_bias)
+
+        # apply connectivity constraints to input and output layers
+        for layer, constraint in zip(
+            (self.w_in, self.w_out), (input_connectivity, output_connectivity)
+        ):
+            if constraint is not None:
+                layer.weight = nn.Parameter(
+                    layer.weight * torchify(constraint)
+                )
+                if layer.bias is not None:
+                    layer.bias = nn.Parameter(
+                        layer.bias * torchify(constraint)
+                    )
 
         # freeze parameters for input/output layers
         for layer, trainable in zip(
@@ -162,6 +184,8 @@ class CTRNN(RNN):
         dale_ratio=None,
         autopses=True,
         connectivity=None,
+        input_connectivity=None,
+        output_connectivity=None,
         w_in_bias=False,
         w_in_train=False,
         w_out_bias=False,
@@ -181,7 +205,12 @@ class CTRNN(RNN):
                 Use None to ignore
             autopses (bool): pass False to remove autopses from
                 recurrent weights
-            connectivity (): not implemented yet
+            connectivity: np.array of shape n_units x n_units with connectivity
+                constraints for the recurrent layer
+            input_connectivity: np.array fo shape n_units x n_inputs with connectivity
+                constraints for the input layer
+            output_connectivity: np.array of shape n_units x n_outputs with connectivity
+                constraints for output layer
             w_in_bias/w_out_bias (bool): if True in/out linear
                 layers will have a bias
             w_in_train/w_out_train (bool): if True in/out linear
@@ -200,6 +229,8 @@ class CTRNN(RNN):
             dale_ratio=dale_ratio,
             autopses=autopses,
             connectivity=connectivity,
+            input_connectivity=input_connectivity,
+            output_connectivity=output_connectivity,
             on_gpu=on_gpu,
         )
 
@@ -235,10 +266,6 @@ class CTRNN(RNN):
         nbatch, length, ninp = x.shape
         out = torch.zeros(length, nbatch, self.output_size)
         for t in range(length):
-            # activations = self.sigma(h)
-            # hdot = (
-            #     -h + self.w_rec(activations) + self.w_in(x[:, t, :])
-            # ) / self.tau
             hdot = (
                 -h + self.sigma(self.w_rec(h) + self.w_in(x[:, t, :]))
             ) / self.tau
@@ -266,6 +293,8 @@ class TorchRNN(RNNBase):
         dale_ratio=None,
         autopses=True,
         connectivity=None,
+        input_connectivity=None,
+        output_connectivity=None,
     ):
         """
         Implements a basic RNN using the RNN class from pytorch and
@@ -279,7 +308,12 @@ class TorchRNN(RNNBase):
                 Use None to ignore
             autopses (bool): pass False to remove autopses from
                 recurrent weights
-            connectivity (): not implemented yet
+            connectivity: np.array of shape n_units x n_units with connectivity
+                constraints for the recurrent layer
+            input_connectivity: np.array fo shape n_units x n_inputs with connectivity
+                constraints for the input layer
+            output_connectivity: np.array of shape n_units x n_outputs with connectivity
+                constraints for output layer
         """
         # Initialize base RNN class
         RNNBase.__init__(
@@ -290,6 +324,8 @@ class TorchRNN(RNNBase):
             dale_ratio=dale_ratio,
             autopses=autopses,
             connectivity=connectivity,
+            input_connectivity=input_connectivity,
+            output_connectivity=output_connectivity,
         )
 
         # Define layers

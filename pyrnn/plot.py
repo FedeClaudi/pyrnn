@@ -6,7 +6,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 from myterial import salmon
 
-from ._plot import clean_axes, calc_nrows_ncols, center_axes
+from ._plot import clean_axes, calc_nrows_ncols, center_axes, create_triplot
 from ._utils import npify, flatten_h
 from .linalg import classify_equilibrium
 
@@ -163,12 +163,14 @@ def plot_training_loss(loss_history):
     return f
 
 
-def plot_recurrent_weights(model, ax=None):
+def plot_recurrent_weights(model, ax=None, scalebar=True):
     """
     Plot a models recurrent weights as a heatmap
 
     Arguments:
         model (RNN): a built RNN
+        ax: axis. Axis to plot onto
+        scalebar: bool. If true a scale bar is shown to indicate values
     """
     if ax is None:
         f, ax = plt.subplots(figsize=(10, 10))
@@ -179,14 +181,44 @@ def plot_recurrent_weights(model, ax=None):
         npify(model.get_recurrent_weights(), flatten=False), cmap="bwr"
     )
 
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes("right", size="5%", pad=0.05)
-    f.colorbar(img, cax=cax, orientation="vertical")
+    if scalebar:
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="5%", pad=0.05)
+        f.colorbar(img, cax=cax, orientation="vertical")
 
     ax.set(xticks=[], yticks=[], xlabel="units", ylabel="units")
     ax.axis("equal")
     clean_axes(f)
     return f, ax
+
+
+def plot_model_weights(model):
+    """
+    Plots input, recurrent and output weights for a
+    given RNN.
+
+
+    Arguments:
+        model (RNN): a built RNN
+    """
+
+    f, axes = create_triplot(figsize=(10, 10))
+
+    # plot recurrent weights
+    plot_recurrent_weights(model, ax=axes.main, scalebar=False)
+
+    # plot input/output weights
+    axes.top.imshow(npify(model.w_in.weight).T, cmap="bwr")
+    axes.right.imshow(npify(model.w_out.weight).T, cmap="bwr")
+
+    # clean axes
+    axes.main.set(title="Recurrent weights")
+    axes.top.set(title="Input weights")
+    axes.right.set(title="Output weights")
+
+    axes.main.axis("off")
+    axes.top.axis("off")
+    axes.right.axis("off")
 
 
 def plot_fps_graph(graph):

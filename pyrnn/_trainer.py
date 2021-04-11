@@ -271,21 +271,12 @@ class Trainer:
                 loss = criterion(output, Y)
                 loss.backward(retain_graph=True)
 
-                # constraint weights to fit connectivity
-                if self.connectivity_constraint is not None:
-                    grad = self.w_rec.weight.grad.clone()
-                    # weight = self.state_dict().get('w_rec.weight')
-                    # weight *= self.connectivity_constraint
-                    self.w_rec.weight.grad = (
-                        grad * self.connectivity_constraint
-                    )
+                # connectivity constraints
+                self.apply_connectivity_constraints()
 
+                # step
                 optimizer.step()
                 scheduler.step()
-
-                # constrain weights
-                # if self.connectivity_constraint is not None:
-                #     self.
 
                 # get current lr
                 lr = scheduler.get_last_lr()[-1]
@@ -298,6 +289,22 @@ class Trainer:
 
         progress.remove_task(bid)
         return epoch_loss, lr
+
+    def apply_connectivity_constraints(self):
+        """
+        Applies constraints to the connectivity of input,
+        recurrent and output layer to ensure that everything's okay
+        """
+        layers = {
+            "input": self.w_in,
+            "recurrent": self.w_rec,
+            "output": self.w_out,
+        }
+
+        for name, constraint in self.connectivity_constraints.items():
+            if constraint is not None:
+                grad = layers[name].weight.grad.clone()
+                layers[name].weight.grad = grad * constraint
 
     def report(
         self,
