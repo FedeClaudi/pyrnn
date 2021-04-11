@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
-import numpy as np
 
 from pyrnn import CTRNN as RNN
 from pyrnn.plot import plot_recurrent_weights
+from pyrnn._utils import constrained_connectivity
 
 """
     Shows how to initialize an RNN with default weights,
@@ -31,9 +31,7 @@ axes[1, 0].set(title="Dale ratio = 0.8")
 
 # ------------------------- connectivity constraints ------------------------- #
 # create  constraints matrix
-connectivity = np.zeros((50, 50))
-connectivity[:30, :30] = 1
-connectivity[30:, 30:] = 1
+connectivity = constrained_connectivity((30, 20), 0.4, 0.05)
 
 # create RNN with given connectivity
 connectivity_rnn = RNN(connectivity=connectivity)

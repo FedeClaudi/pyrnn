@@ -172,6 +172,12 @@ class RNNBase(nn.Module, Trainer):
         self.autopses = autopses
         self.connectivity = connectivity
 
+        # connectivity constraint used to fix weights during training
+        if connectivity is not None:
+            self.connectivity_constraint = connectivity.astype(np.float32)
+        else:
+            self.connectivity_constraint = None
+
         # recurrent weights are not definite yet
         self._is_built = False
         self.params = {}

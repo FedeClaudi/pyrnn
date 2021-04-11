@@ -249,6 +249,7 @@ class Trainer:
         with GracefulInterruptHandler() as handler:
             for batchn, batch in enumerate(loader):
                 progress.update(bid, completed=batchn)
+
                 # initialise
                 X, Y = batch
                 h = self.on_batch_start(self, X, Y)
@@ -270,8 +271,21 @@ class Trainer:
                 loss = criterion(output, Y)
                 loss.backward(retain_graph=True)
 
+                # constraint weights to fit connectivity
+                if self.connectivity_constraint is not None:
+                    grad = self.w_rec.weight.grad.clone()
+                    # weight = self.state_dict().get('w_rec.weight')
+                    # weight *= self.connectivity_constraint
+                    self.w_rec.weight.grad = (
+                        grad * self.connectivity_constraint
+                    )
+
                 optimizer.step()
                 scheduler.step()
+
+                # constrain weights
+                # if self.connectivity_constraint is not None:
+                #     self.
 
                 # get current lr
                 lr = scheduler.get_last_lr()[-1]
