@@ -106,11 +106,16 @@ class RecurrentWeightsInitializer(object):
         self.weights = np.matmul(np.abs(self.weights), np.diag(dale_vec))
 
     def _set_connectivity(self, connectivity):
-        # see: https://colab.research.google.com/github/murraylab/PsychRNN/blob/master/docs/notebooks/BiologicalConstraints.ipynb
-        # and: https://github.com/murraylab/PsychRNN/blob/master/psychrnn/backend/initializations.py
-        raise NotImplementedError(
-            "Need to set up a method to enforce connectivity constraints"
-        )
+        """
+        Constraintes the RNN's recurrent weights connectivity with a given
+        connectivity matrix
+        """
+        if connectivity.shape != self.weights.shape:
+            raise ValueError(
+                "The connectivity constraint matrix should have shape (n_units x n_units)!"
+            )
+
+        self.weights *= connectivity
 
 
 # ------------------------------ Base RNN class ------------------------------ #

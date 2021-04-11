@@ -163,14 +163,17 @@ def plot_training_loss(loss_history):
     return f
 
 
-def plot_recurrent_weights(model):
+def plot_recurrent_weights(model, ax=None):
     """
     Plot a models recurrent weights as a heatmap
 
     Arguments:
         model (RNN): a built RNN
     """
-    f, ax = plt.subplots(figsize=(10, 10))
+    if ax is None:
+        f, ax = plt.subplots(figsize=(10, 10))
+    else:
+        f = ax.figure
 
     img = ax.imshow(
         npify(model.get_recurrent_weights(), flatten=False), cmap="bwr"
@@ -183,7 +186,7 @@ def plot_recurrent_weights(model):
     ax.set(xticks=[], yticks=[], xlabel="units", ylabel="units")
     ax.axis("equal")
     clean_axes(f)
-    return f
+    return f, ax
 
 
 def plot_fps_graph(graph):
