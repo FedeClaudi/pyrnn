@@ -303,8 +303,13 @@ class Trainer:
 
         for name, constraint in self.connectivity_constraints.items():
             if constraint is not None:
-                grad = layers[name].weight.grad.clone()
-                layers[name].weight.grad = grad * constraint
+                try:
+                    grad = layers[name].weight.grad.clone()
+                except AttributeError:
+                    # no grad
+                    pass
+                else:
+                    layers[name].weight.grad = grad * constraint
 
     def report(
         self,

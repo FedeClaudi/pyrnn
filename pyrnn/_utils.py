@@ -5,44 +5,6 @@ import signal
 from einops import repeat
 
 
-def constrained_connectivity(n_units, prob_a_to_b, prob_b_to_a):
-    """
-    Creates a n_units x n_units array with constrained recurrent connectivity
-    between two regions to initialize recurrent weights
-
-    Arguments:
-        n_units: tuple of two int. Number of units in first and second subregion
-        prob_a_to_b: 0 <= float <= 1. Probability of a connection from first
-            to second subregion
-        prob_b_to_a: 0 <= float <= 1. Probability of a connection from second
-            to first subregion
-    """
-    # initialize
-    tot_units = n_units[0] + n_units[1]
-    connectivity = np.zeros((tot_units, tot_units))
-
-    # define sub regions
-    connectivity[: n_units[0], : n_units[0]] = 1
-    connectivity[n_units[0] :, n_units[0] :] = 1
-
-    # define inter region connections
-    a_to_b = np.random.choice(
-        [0, 1],
-        size=connectivity[: n_units[0], n_units[0] :].shape,
-        p=[1 - prob_a_to_b, prob_a_to_b],
-    )
-    connectivity[: n_units[0], n_units[0] :] = a_to_b
-
-    b_to_a = np.random.choice(
-        [0, 1],
-        size=connectivity[n_units[0] :, : n_units[0]].shape,
-        p=[1 - prob_b_to_a, prob_b_to_a],
-    )
-    connectivity[n_units[0] :, : n_units[0]] = b_to_a
-
-    return connectivity
-
-
 def flatten_h(h):
     """
     Flatten the hidden state array

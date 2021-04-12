@@ -220,6 +220,8 @@ def plot_model_weights(model):
     axes.top.axis("off")
     axes.right.axis("off")
 
+    return f, axes
+
 
 def plot_fps_graph(graph):
     """
