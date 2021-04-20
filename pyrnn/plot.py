@@ -177,9 +177,8 @@ def plot_recurrent_weights(model, ax=None, scalebar=True):
     else:
         f = ax.figure
 
-    img = ax.imshow(
-        npify(model.get_recurrent_weights(), flatten=False), cmap="bwr"
-    )
+    W = npify(model.get_recurrent_weights(), flatten=False)
+    img = ax.imshow(W, cmap="bwr", vmin=-W.max(), vmax=W.max())
 
     if scalebar:
         divider = make_axes_locatable(ax)
@@ -208,8 +207,10 @@ def plot_model_weights(model):
     plot_recurrent_weights(model, ax=axes.main, scalebar=False)
 
     # plot input/output weights
-    axes.top.imshow(npify(model.w_in.weight).T, cmap="bwr")
-    axes.right.imshow(npify(model.w_out.weight).T, cmap="bwr")
+    _in = npify(model.w_in.weight).T
+    _out = npify(model.w_out.weight).T
+    axes.top.imshow(_in, cmap="bwr", vmin=-_in.max(), vmax=_in.max())
+    axes.right.imshow(_out, cmap="bwr", vmin=-_out.max(), vmax=_out.max())
 
     # clean axes
     axes.main.set(title="Recurrent weights")

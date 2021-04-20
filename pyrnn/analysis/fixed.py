@@ -118,16 +118,24 @@ class FixedPoint(object):
         h.requires_grad = True
 
         _o, _h = self.model(self.constant_input, h)
-        _h = repeat(_h, "n i -> b n i", b=1).cuda()
+        try:
+            _h = repeat(_h, "n i -> b n i", b=1).cuda()
+        except AssertionError:
+            _h = repeat(_h, "n i -> b n i", b=1)
 
         # Loop over each dimension of the hidden state vector
         for i in range(n_units):
             output = torch.zeros(1, 1, n_units)
             output[0, 0, i] = 1
 
-            g = torch.autograd.grad(
-                _h, h, grad_outputs=output.cuda(), retain_graph=True
-            )[0]
+            try:
+                g = torch.autograd.grad(
+                    _h, h, grad_outputs=output.cuda(), retain_graph=True
+                )[0]
+            except AssertionError:
+                g = torch.autograd.grad(
+                    _h, h, grad_outputs=output, retain_graph=True
+                )[0]
             jacobian[:, i : i + 1] = repeat(g, "i -> i n", n=1)
 
         self.jacobian = jacobian.numpy()

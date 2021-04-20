@@ -197,7 +197,7 @@ class RNNBase(nn.Module, Trainer):
             ):
                 print("Okay, not saving anything then")
                 return
-        logger.info(f"[{amber_light}]Saving model at: [{orange}]{path}")
+        logger.debug(f"[{amber_light}]Saving model at: [{orange}]{path}")
         torch.save(self.state_dict(), path)
 
     @classmethod
