@@ -2,9 +2,9 @@ import numpy as np
 from vedo import show, Sphere, Tube
 from loguru import logger
 
-from ._plot import points_from_pc
-from ._utils import prepend_dim, flatten_h
-from .analysis.dimensionality import PCA
+from pyrnn._plot import points_from_pc
+from pyrnn._utils import prepend_dim, flatten_h
+from pyrnn.analysis.dimensionality import PCA
 
 from vedo import settings
 

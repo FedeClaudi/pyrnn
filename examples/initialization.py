@@ -2,11 +2,13 @@ import matplotlib.pyplot as plt
 
 from pyrnn import CTRNN as RNN
 from pyrnn.plot import plot_recurrent_weights
-from pyrnn._utils import constrained_connectivity
 
 """
     Shows how to initialize an RNN with default weights,
-    without autopses, with Dale's ration and with connectivity constraints
+    without autopses, with Dale's ration and with connectivity constraints.
+
+    For an exmaple of how to initialize the connectivity of a complex
+    RNN with multiple subregions, see multi_region_connectivity.py
 """
 
 # create a figure
@@ -28,14 +30,6 @@ axes[0, 1].set(title="No autopses")
 dale = RNN(dale_ratio=0.8)
 plot_recurrent_weights(dale, ax=axes[1, 0])
 axes[1, 0].set(title="Dale ratio = 0.8")
-
-# ------------------------- connectivity constraints ------------------------- #
-# create  constraints matrix
-connectivity = constrained_connectivity((30, 20), 0.4, 0.05)
-
-# create RNN with given connectivity
-connectivity_rnn = RNN(connectivity=connectivity)
-plot_recurrent_weights(connectivity_rnn, ax=axes[1, 1])
-axes[1, 1].set(title="Constrained connectivity")
+axes[1, 1].axis("off")
 
 plt.show()

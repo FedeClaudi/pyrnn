@@ -3,8 +3,8 @@ import torch
 
 # from torch.nn.utils.rnn import pad_packed_sequence
 
-from ._utils import npify, torchify
-from ._rnn import RNNBase
+from pyrnn._utils import npify, torchify
+from pyrnn._rnn import RNNBase
 
 
 class RNN(RNNBase):

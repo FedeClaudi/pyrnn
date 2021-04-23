@@ -6,8 +6,8 @@ import sys
 from myterial import amber_light, orange, salmon
 from rich.table import Table
 
-from ._progress import train_progress, LiveLossPlot
-from ._utils import GracefulInterruptHandler
+from pyrnn._progress import train_progress, LiveLossPlot
+from pyrnn._utils import GracefulInterruptHandler
 
 is_win = sys.platform == "win32"
 
@@ -309,7 +309,19 @@ class Trainer:
                     # no grad
                     pass
                 else:
-                    layers[name].weight.grad = grad * constraint
+                    layers[name].weight.grad = grad * np.abs(constraint)
+
+                    if name == "recurrent" and np.any(constraint < 0):
+                        # enforce Dale's ratio.
+                        excitatory = np.sign(constraint) == 1
+                        inhibitory = np.sign(constraint) == -1
+
+                        layers[name].weight.data[excitatory] = torch.abs(
+                            layers[name].weight.data[excitatory]
+                        )
+                        layers[name].weight.data[inhibitory] = -torch.abs(
+                            layers[name].weight.data[inhibitory]
+                        )
 
     def report(
         self,

@@ -11,11 +11,11 @@ from io import StringIO
 from rich.console import Console
 from loguru import logger
 
-from ._progress import base_progress
-from ._utils import npify
-from ._io import load_json, save_json
-from ._trainer import Trainer
-from .connectivity import RecurrentWeightsInitializer
+from pyrnn._progress import base_progress
+from pyrnn._utils import npify
+from pyrnn._io import load_json, save_json
+from pyrnn._trainer import Trainer
+from pyrnn.weights import RecurrentWeightsInitializer
 
 # --------------------------- Placeholder functions -------------------------- #
 
@@ -207,13 +207,12 @@ class RNNBase(nn.Module, Trainer):
             ):
                 print("Okay, not saving anything then")
                 return
-        logger.debug(f"[{amber_light}]Saving model at: [{orange}]{path}")
         torch.save(self.state_dict(), path)
 
     @classmethod
     def load(cls, path, *args, load_kwargs={}, **kwargs):
         """
-        Load model from .pt file
+        Load model from pyrnn.pt file
         """
         if not path.endswith(".pt"):
             raise ValueError("Expected a path point to a .pt file")
@@ -273,7 +272,6 @@ class RNNBase(nn.Module, Trainer):
                 )
                 self.cuda()
         else:
-            logger.debug("No GPU found")
             self.on_gpu = False
 
     def _initialize_hidden(self, x, *args):

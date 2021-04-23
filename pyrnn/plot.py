@@ -6,9 +6,14 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 from myterial import salmon
 
-from ._plot import clean_axes, calc_nrows_ncols, center_axes, create_triplot
-from ._utils import npify, flatten_h
-from .linalg import classify_equilibrium
+from pyrnn._plot import (
+    clean_axes,
+    calc_nrows_ncols,
+    center_axes,
+    create_triplot,
+)
+from pyrnn._utils import npify, flatten_h
+from pyrnn.linalg import classify_equilibrium
 
 
 def plot_eigenvalues_magnitudes(evals, ax=None, color=None, alpha=None):
