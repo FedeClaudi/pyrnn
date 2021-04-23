@@ -23,8 +23,8 @@ class Region:
     name: str
     n_units: str
     idx: int
-    dale_ratio: float = None
     autopses: bool
+    dale_ratio: float = None
 
     @property
     def connectivity(self):
@@ -111,7 +111,10 @@ class MultiRegionConnectivity:
         """
         Recurrent connectivity for the whole network
         """
-        return self.connectivity * self.sign
+        if self.sign is not None:
+            return self.connectivity * self.sign
+        else:
+            return self.connectivity
 
     @property
     def W_out(self):
@@ -423,5 +426,7 @@ class RecurrentWeightsInitializer(object):
         # enforce connectivity sign to match Dale ratio
         excitatory = np.sign(connectivity) == 1
         inhibitory = np.sign(connectivity) == -1
-        self.weights[excitatory] = np.abs(self.weights[excitatory])
-        self.weights[inhibitory] = -np.abs(self.weights[inhibitory])
+        if np.any(inhibitory):
+            # otherwise dale ratio was not enforced
+            self.weights[excitatory] = np.abs(self.weights[excitatory])
+            self.weights[inhibitory] = -np.abs(self.weights[inhibitory])
