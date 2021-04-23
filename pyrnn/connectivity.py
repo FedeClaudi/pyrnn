@@ -73,7 +73,7 @@ class MultiRegionConnectivity:
         idx = 0
         for name, n_units in regions.items():
             self.regions[name] = Region(
-                name, n_units, idx, dale_ratio, autopses
+                name, n_units, idx, autopses, dale_ratio
             )
             idx += n_units
 
