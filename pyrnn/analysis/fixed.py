@@ -15,7 +15,7 @@ from pyrnn._utils import (
     torchify,
 )
 
-from pyrnn.linalg import get_eigs, classify_equilibrium, fp_colors
+from pyrnn.linalg import classify_equilibrium, fp_colors
 
 # named tuple storing eigen modes info
 eig_mode = namedtuple("eigmode", "stable, eigv, eigvec")
@@ -147,7 +147,7 @@ class FixedPoint(object):
         stable/unstable modes
         """
         # Get jacobian's eigs
-        eigv, eigvecs = get_eigs(self.jacobian)
+        eigv, eigvecs = np.linalg.eig(self.jacobian)
 
         # Get type of equilibrium
         self._type = classify_equilibrium(eigv)

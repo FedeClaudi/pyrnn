@@ -98,6 +98,16 @@ class RNNBase(nn.Module, Trainer):
         self.input_connectivity = input_connectivity
         self.output_connectivity = output_connectivity
 
+        if connectivity is not None and (
+            dale_ratio is not None or not autopses
+        ):
+            logger.warning(
+                "When passing a connectivity matrix dale ratio and autopses are ignored."
+                "If you want to set these values you need to do it when the connectivity matrix is created"
+            )
+            self.dale_ratio = None
+            self.autopses = True
+
         # connectivity constraints used to fix weights during training
         self.connectivity_constraints = {}
         for name, constraint in zip(

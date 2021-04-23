@@ -48,7 +48,7 @@ def get_trc_det(arr):
 def get_eigs(arr):
     """
     Return the eigenvalues and eigenvectors of
-    an input array, sorted by the magnitue
+    an input array, sorted by the magnitude
     of the eigenvalues
     """
     eigv, eigvecs = np.linalg.eig(arr)
