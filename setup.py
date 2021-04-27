@@ -21,7 +21,7 @@ requirements = [
 
 setup(
     name="pyrnn",
-    version="0.0.4",
+    version="0.0.5",
     description="Pytorch implementation of vanilla RNN",
     long_description=long_description,
     long_description_content_type="text/markdown",

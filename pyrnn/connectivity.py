@@ -38,7 +38,7 @@ class Region:
     @property
     def sign(self):
         if self.dale_ratio is None:
-            return None
+            return np.zeros(self.n_units)
         else:
             _sign = np.ones(self.n_units)
             n_excitatory = int(np.floor(len(_sign) * self.dale_ratio))
@@ -55,8 +55,6 @@ class MultiRegionConnectivity:
     def __init__(
         self,
         *regions,
-        autopses=True,
-        dale_ratio=None,
     ):
         """
         Facilitates the creation of connectivity matrices (including inputs
@@ -65,9 +63,6 @@ class MultiRegionConnectivity:
         Arugments:
             regions: variable number of Region objects. Ordering determines
                 how the regions are ordered in the connectivity matrix.
-            autopses: bool, True. Should autopses be included in connectivity?
-            dale_ratio float, None. 0 < dale_ratio <1. Percentage of exitatory uinits.
-                If dale_ratio is None units can be both excitatory and inhibitory.
         """
         # total number of units
         self.n_units = np.sum([r.n_units for r in regions])
@@ -88,11 +83,7 @@ class MultiRegionConnectivity:
             ] = region.connectivity
 
         # create sign vector
-        self.sign = (
-            None
-            if dale_ratio is None
-            else np.hstack([r.sign for r in self.regions.values()])
-        )
+        self.sign = np.hstack([r.sign for r in self.regions.values()])
 
         # create empty containers for input and output connectivity
         self.inputs = []
