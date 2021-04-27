@@ -175,7 +175,14 @@ class MultiRegionConnectivity:
 
         self.outputs.append(out)
 
-    def add_projection(self, from_region, to_region, probability):
+    def add_projection(
+        self,
+        from_region,
+        to_region,
+        probability,
+        from_cell_type="all",
+        to_cell_type="all",
+    ):
         """
         Adds connections from one region to an other with some probability.
 
@@ -184,41 +191,51 @@ class MultiRegionConnectivity:
             to_region: str. Name of Region receiving projections
             probability: float 0 <= probability <=1. Each unit in from_region
                 connects to each unit in to_region with this probability
+            from/to_cell_type: str ('all', 'excitatory', 'inhibitory'). Which cell type
+                should the projections come from and target
         """
+
+        def get_sign(cell_type):
+            """converts a str with cell type
+            to integer representation (1 for excitatory, 0 if 'all' and -1 for inhibitory)
+            """
+            return ["inhibitory", "all", "excitatory"].index(cell_type) - 1
+
         # get regions
         _from = self.regions[from_region]
         _to = self.regions[to_region]
 
-        # get indices of correct part of connectivity matrix
-        if _from.idx < _to.idx:
-            # feedforward projections
-            row_start = _to.idx
-            row_end = _to.end_idx
-            col_start = _from.idx
-            col_end = _from.end_idx
-        else:
-            # feedback projections
-            row_start = _to.idx
-            row_end = _to.end_idx
-            col_start = _from.idx
-            col_end = _from.end_idx
+        # select which array indices to modify
+        rows = np.zeros(self.n_units)
+        cols = np.zeros(self.n_units)
+        rows[_to.idx : _to.end_idx] = 1
+        cols[_from.idx : _from.end_idx] = 1
+
+        # match by cell type
+        if get_sign(from_cell_type) != 0:
+
+            cols[self.sign != get_sign(from_cell_type)] = 0
+
+        if get_sign(to_cell_type) != 0:
+            rows[self.sign != get_sign(to_cell_type)] = 0
 
         # add connections
         logger.debug(
-            f"Adding connections from {from_region} to {to_region} (p= {probability:.3f}) | row indices: ({row_start}-{row_end}) | col indices: ({col_start}-{col_end})"
+            f"Adding connections from {from_region} to {to_region} (p= {probability:.3f})"
         )
         self.connectivity = self.add_connections_with_probability(
             probability,
             self.connectivity,
-            row_start,
-            row_end,
-            col_start,
-            col_end,
+            rows,
+            cols,
         )
 
     @staticmethod
     def add_connections_with_probability(
-        probability, arr, row_start, row_end, col_start, col_end
+        probability,
+        arr,
+        rows,
+        cols,
     ):
         """
         Given a 2D numpy array it assigns to a portion of it an array of 1s choosen randomly with
@@ -227,17 +244,25 @@ class MultiRegionConnectivity:
         Arguments:
             probability: float. Probability of connections
             arr: np.ndarray (2d array with connections matrix)
-            row_start, row_end, col_start, col_end: int. Indices used to select part of the array
-                to which the random 0s-1s array is assigned
+            rows, cols: np.ndarray (n_units x 1) with 1 for row/col to
+                assign connections to and 0 elsewhere
 
         Returns:
             arr: modified array with connectivity
         """
-
-        shape = arr[row_start:row_end, col_start:col_end].shape
-        arr[row_start:row_end, col_start:col_end] = np.random.choice(
-            [0, 1], size=shape, p=[1 - probability, probability]
+        # create a lot of random connections
+        random_connections = np.random.choice(
+            [0, 1], size=arr.shape, p=[1 - probability, probability]
         )
+
+        # prune unnecessary ones
+        rows = np.array(1 - rows, dtype=bool)
+        cols = np.array(1 - cols, dtype=bool)
+        random_connections[rows, :] = 0
+        random_connections[:, cols] = 0
+
+        # add connections
+        arr += random_connections
         return arr
 
     def show(self):
