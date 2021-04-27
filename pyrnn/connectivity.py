@@ -22,8 +22,8 @@ class Region:
 
     name: str
     n_units: str
-    idx: int
-    autopses: bool
+    idx: int = 0  # specifies the index of the region's first unit in whole RNN's connectivity
+    autopses: bool = True
     dale_ratio: float = None
 
     @property
@@ -52,30 +52,33 @@ class Region:
 
 
 class MultiRegionConnectivity:
-    def __init__(self, autopses=True, dale_ratio=None, **regions):
+    def __init__(
+        self,
+        *regions,
+        autopses=True,
+        dale_ratio=None,
+    ):
         """
         Facilitates the creation of connectivity matrices (including inputs
         and outputs) for multi-region RNNs.
 
         Arugments:
+            regions: variable number of Region objects. Ordering determines
+                how the regions are ordered in the connectivity matrix.
             autopses: bool, True. Should autopses be included in connectivity?
             dale_ratio float, None. 0 < dale_ratio <1. Percentage of exitatory uinits.
                 If dale_ratio is None units can be both excitatory and inhibitory.
-
-            regions: name=n_units. Variable number of regions to add to RNN with their name
-                and numberof units
         """
         # total number of units
-        self.n_units = np.sum(list(regions.values()))
+        self.n_units = np.sum([r.n_units for r in regions])
 
-        # create regions
+        # create regions and adjust idx
         self.regions = {}
         idx = 0
-        for name, n_units in regions.items():
-            self.regions[name] = Region(
-                name, n_units, idx, autopses, dale_ratio
-            )
-            idx += n_units
+        for region in regions:
+            region.idx = idx
+            self.regions[region.name] = region
+            idx += region.n_units
 
         # create connectivity
         self.connectivity = np.zeros((self.n_units, self.n_units))

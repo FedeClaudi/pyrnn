@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from pyrnn import CTRNN as RNN
 from pyrnn.plot import plot_model_weights
-from pyrnn.connectivity import MultiRegionConnectivity
+from pyrnn.connectivity import MultiRegionConnectivity, Region
 
 
 """
@@ -11,12 +11,34 @@ from pyrnn.connectivity import MultiRegionConnectivity
 """
 
 # Create multi region connectivity with 3 areas
-# called th, mop and bg with different number of units each.
-# also a Dale ratio and remove autopses
+# called th, mop and bg with different number of units each and different parameters (e.g. Dale's ratio).
+
+th = Region(
+    name="th",
+    n_units=24,
+    dale_ratio=1,  # only excitatory
+    autopses=False,
+)
+
+
+mop = Region(
+    name="mop",
+    n_units=64,
+    dale_ratio=0.8,
+    autopses=False,
+)
+
+bg = Region(
+    name="bg",
+    n_units=32,
+    dale_ratio=0,  # only inhibitory
+    autopses=False,
+)
+
 mrc = MultiRegionConnectivity(
-    th=24,
-    mop=64,
-    bg=24,
+    th,
+    mop,
+    bg,
     dale_ratio=0.7,
     autopses=False,
 )
