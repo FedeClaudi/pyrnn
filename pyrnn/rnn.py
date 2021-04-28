@@ -37,6 +37,7 @@ class RNN(RNNBase):
         w_out_bias=False,
         w_out_train=False,
         on_gpu=False,
+        grad_clip=None,
     ):
         """
         Implements custom RNN.
@@ -60,6 +61,7 @@ class RNN(RNNBase):
             w_in_train/w_out_train (bool): if True in/out linear
                 layers will be trained
             on_gpu (bool): if true computation is carried out on a GPU
+            grad_clip (float): Value to clip the gradients at during learning. Set to None to not use it.
 
         """
         # Initialize base RNN class
@@ -74,6 +76,7 @@ class RNN(RNNBase):
             input_connectivity=input_connectivity,
             output_connectivity=output_connectivity,
             on_gpu=on_gpu,
+            grad_clip=grad_clip,
         )
         self.w_in_bias = w_in_bias
         self.w_in_train = w_in_train
@@ -193,6 +196,7 @@ class CTRNN(RNN):
         on_gpu=False,
         dt=5,
         tau=100,
+        grad_clip=None,
     ):
         """
         Implements custom RNN.
@@ -218,7 +222,7 @@ class CTRNN(RNN):
             on_gpu (bool): if true computation is carried out on a GPU
             dt: int. Time interval between two consecutive samples
             tau: int. Time constant of the network's hidden dynamics
-
+            grad_clip (float): Value to clip the gradients at during learning. Set to None to not use it.
         """
         # Initialize base RNN class
         RNN.__init__(
@@ -232,6 +236,7 @@ class CTRNN(RNN):
             input_connectivity=input_connectivity,
             output_connectivity=output_connectivity,
             on_gpu=on_gpu,
+            grad_clip=grad_clip,
         )
 
         self.tau, self.dt = tau, dt
@@ -266,8 +271,11 @@ class CTRNN(RNN):
         nbatch, length, ninp = x.shape
         out = torch.zeros(length, nbatch, self.output_size)
         for t in range(length):
+            # hdot = (
+            #     -h + self.sigma(self.w_rec(h) + self.w_in(x[:, t, :]))
+            # ) / self.tau
             hdot = (
-                -h + self.sigma(self.w_rec(h) + self.w_in(x[:, t, :]))
+                -h + self.w_rec(self.sigma(h)) + self.w_in(x[:, t, :])
             ) / self.tau
             h = h + self.dt * hdot
 

@@ -59,6 +59,7 @@ class RNNBase(nn.Module, Trainer):
         input_connectivity=None,
         output_connectivity=None,
         on_gpu=False,
+        grad_clip=None,
     ):
         """
         Base RNN class, implements method
@@ -82,6 +83,7 @@ class RNNBase(nn.Module, Trainer):
             output_connectivity: np.array of shape n_units x n_outputs with connectivity
                 constraints for output layer
             on_gpu (bool): if true computation is carried out on a GPU
+            grad_clip (float): Value to clip the gradients at during learning. Set to None to not use it.
         """
         super(RNNBase, self).__init__()
         Trainer.__init__(self)
@@ -97,6 +99,8 @@ class RNNBase(nn.Module, Trainer):
         self.connectivity = connectivity
         self.input_connectivity = input_connectivity
         self.output_connectivity = output_connectivity
+
+        self.grad_clip = grad_clip
 
         if connectivity is not None and (
             dale_ratio is not None or not autopses
@@ -273,6 +277,16 @@ class RNNBase(nn.Module, Trainer):
                 self.cuda()
         else:
             self.on_gpu = False
+
+        # set hook for gradient clipping
+        if self.grad_clip is not None:
+            for p in self.parameters():
+                if p.requires_grad:
+                    p.register_hook(
+                        lambda grad: torch.clamp(
+                            grad, -self.grad_clip, self.grad_clip
+                        )
+                    )
 
     def _initialize_hidden(self, x, *args):
         """
