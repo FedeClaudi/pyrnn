@@ -168,7 +168,7 @@ def plot_training_loss(loss_history):
     return f
 
 
-def plot_recurrent_weights(model, ax=None, scalebar=True):
+def plot_recurrent_weights(model, ax=None, scalebar=True, **kwargs):
     """
     Plot a models recurrent weights as a heatmap
 
@@ -190,13 +190,16 @@ def plot_recurrent_weights(model, ax=None, scalebar=True):
         cax = divider.append_axes("right", size="5%", pad=0.05)
         f.colorbar(img, cax=cax, orientation="vertical")
 
-    ax.set(xticks=[], yticks=[], xlabel="units", ylabel="units")
+    if not kwargs:
+        ax.axis("off")
+    else:
+        ax.set(**kwargs)
     ax.axis("equal")
     clean_axes(f)
     return f, ax
 
 
-def plot_model_weights(model):
+def plot_model_weights(model, **kwargs):
     """
     Plots input, recurrent and output weights for a
     given RNN.
@@ -209,7 +212,7 @@ def plot_model_weights(model):
     f, axes = create_triplot(figsize=(10, 10))
 
     # plot recurrent weights
-    plot_recurrent_weights(model, ax=axes.main, scalebar=False)
+    plot_recurrent_weights(model, ax=axes.main, scalebar=False, **kwargs)
 
     # plot input/output weights
     _in = npify(model.w_in.weight).T
@@ -222,7 +225,6 @@ def plot_model_weights(model):
     axes.top.set(title="Input weights")
     axes.right.set(title="Output weights")
 
-    axes.main.axis("off")
     axes.top.axis("off")
     axes.right.axis("off")
 

@@ -223,7 +223,17 @@ class RNNBase(nn.Module, Trainer):
 
         logger.info(f"[{amber_light}]Loading model from: [{orange}]{path}")
         model = cls(*args, **kwargs)
-        model.load_state_dict(torch.load(path, **load_kwargs))
+        try:
+            model.load_state_dict(torch.load(path, **load_kwargs))
+        except RuntimeError:
+            logger.debug(
+                "Failed lo to load model, attempting without GPU for CPU-only machines"
+            )
+            model.load_state_dict(
+                torch.load(
+                    path, **load_kwargs, map_location=torch.device("cpu")
+                )
+            )
         model.eval()
         return model
 

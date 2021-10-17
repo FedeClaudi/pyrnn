@@ -1,4 +1,9 @@
 import matplotlib.pyplot as plt
+
+import sys
+
+sys.path.append("./")
+
 from pyrnn import CTRNN as RNN
 from pyrnn.plot import plot_model_weights
 from pyrnn.connectivity import MultiRegionConnectivity, Region
@@ -39,8 +44,8 @@ mrc = MultiRegionConnectivity(
     th,
     mop,
     bg,
-    dale_ratio=0.7,
-    autopses=False,
+    # dale_ratio=0.7,
+    # autopses=False,
 )
 
 # create feedforward connections
@@ -49,6 +54,7 @@ mrc.add_projection("th", "bg", 0.8)
 
 # create feedback connections
 mrc.add_projection("mop", "th", 0.1)
+
 
 mrc.add_projection("bg", "mop", 0.2)
 
@@ -76,5 +82,5 @@ rnn = RNN(
 )
 
 
-plot_model_weights(rnn)
+plot_model_weights(rnn, **mrc.W_mtx_axes_labels)
 plt.show()

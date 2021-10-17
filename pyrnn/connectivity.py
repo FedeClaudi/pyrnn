@@ -135,6 +135,20 @@ class MultiRegionConnectivity:
         """
         return len(self.outputs)
 
+    @property
+    def W_mtx_axes_labels(self) -> dict:
+        """
+        When plotting a network's W matrix, this creates
+        axes labels to mark where each region is.
+        """
+        ax_params = dict(xticks=[], xticklabels=[], xlabel="FROM", ylabel="TO")
+        for rname, region in self.regions.items():
+            ax_params["xticks"].append(region.idx + region.n_units / 2)
+            ax_params["xticklabels"].append(rname)
+        ax_params["yticks"] = ax_params["xticks"]
+        ax_params["yticklabels"] = ax_params["xticklabels"]
+        return ax_params
+
     def add_input(self, *regions):
         """
         Add an input targeting specific regions.
