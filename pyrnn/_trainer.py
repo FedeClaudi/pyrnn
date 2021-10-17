@@ -119,7 +119,9 @@ class Trainer:
                             lr=lr,
                         )
 
-                        epoch_loss, lr = self.run_epoch(*operators, progress)
+                        epoch_loss, lr = self.run_epoch(
+                            *operators, progress, epoch
+                        )
                         if epoch_loss is None:
                             break
 
@@ -221,7 +223,9 @@ class Trainer:
 
         return loader, optimizer, scheduler, criterion
 
-    def run_epoch(self, loader, optimizer, scheduler, criterion, progress):
+    def run_epoch(
+        self, loader, optimizer, scheduler, criterion, progress, epoch
+    ):
         """
         Runs a single training epoch: iterates over
         batches, predicts each batch and computes epoch loss
@@ -276,7 +280,7 @@ class Trainer:
 
                 # step
                 optimizer.step()
-                scheduler.step()
+                scheduler.step(epoch=epoch)
 
                 # get current lr
                 lr = scheduler.get_last_lr()[-1]
