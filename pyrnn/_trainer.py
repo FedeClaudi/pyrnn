@@ -126,14 +126,14 @@ class Trainer:
                             break
 
                         if logger:
-                            logger.bind(training=True).info(
+                            logger.info(
                                 f"Epoch {epoch} - loss: {epoch_loss:.6f} - lr: {lr:.6f}"
                             )
 
                         # save if it's the lowest loss so far
                         if save_at_min_loss and epoch_loss < min_loss:
                             if logger:
-                                logger.bind(training=True).info(
+                                logger.info(
                                     f"Epoch {epoch} - SAVING MODEL AT LOWEST LOSS. path: {save_path}"
                                 )
                             self.save(save_path, overwrite=True)
